@@ -67,6 +67,32 @@ export const httpRequestDurationMs = new client.Histogram({
   registers: [register]
 });
 
+export const geminiAnalysisDurationMs = new client.Histogram({
+  name: "gemini_analysis_duration_ms",
+  help: "Gemini analysis duration in milliseconds",
+  buckets: [50, 100, 300, 500, 1000, 2000, 5000, 10000, 20000],
+  registers: [register]
+});
+
+export const groqAnalysisDurationMs = new client.Histogram({
+  name: "groq_analysis_duration_ms",
+  help: "Groq analysis duration in milliseconds",
+  buckets: [50, 100, 300, 500, 1000, 2000, 5000, 10000, 20000],
+  registers: [register]
+});
+
+export const modelAgreementRate = new client.Gauge({
+  name: "model_agreement_rate",
+  help: "Agreement rate between Gemini and Groq model analyses",
+  registers: [register]
+});
+
+export const modelComparisonTotal = new client.Counter({
+  name: "model_comparison_total",
+  help: "Total number of multi-model comparisons performed",
+  registers: [register]
+});
+
 export const backgroundJobCounter = new client.Counter({
   name: "ai_health_background_jobs_total",
   help: "Background jobs processed",

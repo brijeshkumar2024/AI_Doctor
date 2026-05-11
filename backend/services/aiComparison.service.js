@@ -1,5 +1,11 @@
 import OpenAI from "openai";
 import { sendGeminiRequest } from "./providers/geminiProvider.js";
+import {
+  geminiAnalysisDurationMs,
+  groqAnalysisDurationMs,
+  modelAgreementRate,
+  modelComparisonTotal
+} from "../config/metrics.js";
 
 const DEFAULT_ANALYSIS = {
   summary: "",
@@ -211,6 +217,14 @@ export const runComparisonAnalysis = async (ocrText) => {
   const groq = groqResult.status === "fulfilled" ? groqResult.value.result : DEFAULT_ANALYSIS;
 
   const comparisonScore = buildComparisonScore(gemini.keyFindings, groq.keyFindings);
+  geminiAnalysisDurationMs.observe(
+    geminiResult.status === "fulfilled" ? geminiResult.value.duration : 0
+  );
+  groqAnalysisDurationMs.observe(
+    groqResult.status === "fulfilled" ? groqResult.value.duration : 0
+  );
+  modelAgreementRate.set(comparisonScore.agreementRate);
+  modelComparisonTotal.inc();
 
   return {
     gemini,
