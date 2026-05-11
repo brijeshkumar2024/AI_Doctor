@@ -85,10 +85,11 @@ export const refreshSession = asyncHandler(async (req, res) => {
     throw new AppError("Refresh token is missing", 401, "REFRESH_TOKEN_MISSING");
   }
 
-  const decoded = jwt.verify(
-    rawRefreshToken,
-    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
-  );
+  if (!process.env.JWT_REFRESH_SECRET) {
+    throw new AppError("Server misconfigured", 500, "CONFIG_ERROR");
+  }
+
+  const decoded = jwt.verify(rawRefreshToken, process.env.JWT_REFRESH_SECRET);
 
   if (decoded.type !== "refresh") {
     throw new AppError("Invalid refresh token", 401, "INVALID_REFRESH_TOKEN");
