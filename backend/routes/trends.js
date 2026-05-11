@@ -32,35 +32,41 @@ router.get("/parameters", async (req, res) => {
 router.get("/summary", async (req, res) => {
   try {
     const userId = getUserId(req);
-    const parameters = await HealthMetric.distinct("parameter", { userId });
+    const allMetrics = await HealthMetric.find({ userId })
+      .sort({ reportDate: -1 })
+      .lean();
 
-    const summary = [];
-    for (const parameter of parameters) {
-      const dataPoints = await HealthMetric.find({ userId, parameter })
-        .sort({ reportDate: 1 })
-        .select("value reportDate")
-        .lean();
+    const grouped = {};
+    for (const metric of allMetrics) {
+      if (!grouped[metric.parameter]) {
+        grouped[metric.parameter] = {
+          metrics: [],
+          latest: metric
+        };
+      }
+      grouped[metric.parameter].metrics.push(metric);
+    }
 
-      if (dataPoints.length < 2) continue;
+    const summary = Object.entries(grouped).reduce((entries, [parameter, { metrics, latest }]) => {
+      const pattern = PARAMETER_PATTERNS[parameter];
+      if (!pattern || metrics.length < 2) return entries;
 
-      const latestMetric = await HealthMetric.findOne({ userId, parameter })
-        .sort({ reportDate: -1 })
-        .select("value status reportDate")
-        .lean();
+      const dataPoints = [...metrics].sort((a, b) => new Date(a.reportDate) - new Date(b.reportDate));
+      const trend = calculateTrend(dataPoints, pattern.normalRange);
 
-      const trend = calculateTrend(dataPoints, PARAMETER_PATTERNS[parameter].normalRange);
-
-      summary.push({
+      entries.push({
         parameter,
-        unit: PARAMETER_PATTERNS[parameter].unit,
-        normalRange: PARAMETER_PATTERNS[parameter].normalRange,
-        latestValue: latestMetric.value,
-        latestStatus: latestMetric.status,
-        latestDate: latestMetric.reportDate,
-        dataPointCount: dataPoints.length,
+        unit: pattern.unit,
+        normalRange: pattern.normalRange,
+        latestValue: latest.value,
+        latestStatus: latest.status,
+        latestDate: latest.reportDate,
+        dataPointCount: metrics.length,
         trend
       });
-    }
+
+      return entries;
+    }, []);
 
     // Sort by worsening trends first
     summary.sort((a, b) => {
