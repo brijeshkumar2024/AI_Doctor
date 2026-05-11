@@ -26,6 +26,10 @@ The system is built as a full-stack web application with a React frontend, Expre
 - PDF health summary export
 - Redis caching and background jobs
 
+## ✨ Advanced Features
+
+- **Real-Time Job Status Updates**: Instant updates on report processing status using Socket.IO WebSocket connections, replacing polling for better user experience.
+
 ## Tech Stack
 
 ### Frontend
