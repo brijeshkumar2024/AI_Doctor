@@ -41,8 +41,7 @@ const setupConnectionHandler = (io) => {
 
     // Emit confirmation
     socket.emit('connected', {
-      message: 'Real-time updates enabled',
-      userId: socket.userId
+      message: 'Real-time updates enabled'
     });
 
     // Handle client requesting report status
