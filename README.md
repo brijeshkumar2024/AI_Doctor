@@ -13,91 +13,197 @@ The platform is designed for users who want to digitize and understand medical r
 
 The system is built as a full-stack web application with a React frontend, Express backend, MongoDB persistence, Redis-based background infrastructure, and optional third-party integrations for AI, file storage, and email delivery.
 
+## ✨ Advanced Features
+
+### 🔬 Dual-Model AI Analysis Pipeline
+- **Async medical report pipeline** using BullMQ + Redis with dual-model AI comparison (Gemini 1.5 Flash + LLaMA 3 70B via Groq)
+- **Parallel Promise.allSettled execution** with agreement scoring and divergent clinical finding detection
+- Consensus-based analysis combining multiple AI models for higher accuracy and reliability
+
+### 📊 Longitudinal Health Trend Tracking
+- **10 biomarkers tracking**: glucose, cholesterol, hemoglobin, blood pressure, TSH, creatinine, WBC, HDL/LDL, and more
+- **Recharts time-series visualization** with normal range shading and trend indicators
+- **Automatic metric extraction** from AI analysis with deduplication and status classification (normal/low/high/critical)
+
+### 🔒 Secure Doctor Share Links
+- **64-character crypto.randomBytes tokens** for maximum security
+- **QR code generation** for easy mobile access
+- **MongoDB TTL auto-expiry** with configurable expiration periods
+- **Capped access logging** (last 50 entries) to prevent unbounded growth
+- **PII-stripped public endpoints** ensuring patient privacy
+
+### ⚡ Real-Time WebSocket Pipeline
+- **Socket.IO WebSocket pipeline** replacing traditional polling for instant updates
+- **8 processing stages** with real-time push notifications (OCR, AI analysis, comparison, etc.)
+- **JWT socket authentication middleware** with per-user private rooms
+- **10-second polling fallback** for network reliability
+
+### 🛡️ Production-Ready Infrastructure
+- **HttpOnly JWT cookies** for secure authentication
+- **503 health degradation** responses when services are unhealthy
+- **Generic error responses** in production to prevent information leakage
+- **Prometheus metrics** for monitoring and alerting
+- **Docker + Nginx** containerization with reverse proxy
+- **GitHub Actions CI/CD** with automated testing and deployment
+
 ## Features
 
 - OCR-based medical report extraction
 - AI-powered report analysis
-- symptom checker
+- Symptom checker with AI guidance
 - AI health chat assistant
-- prescription analyzer
-- health risk scoring
-- health trend dashboard
-- secure report sharing
+- Prescription analyzer
+- Health risk scoring
+- Health trend dashboard with biomarker tracking
+- Secure report sharing with doctor links
 - PDF health summary export
 - Redis caching and background jobs
-
-## ✨ Advanced Features
-
-- **Real-Time Job Status Updates**: Instant updates on report processing status using Socket.IO WebSocket connections, replacing polling for better user experience.
+- Real-time processing status updates
+- Multi-language support (i18n)
+- Responsive mobile-first design
 
 ## Tech Stack
 
 ### Frontend
 
-- React
-- Vite
-- Tailwind CSS
-- React Router
-- Axios
-- react-i18next
-- Recharts
-- react-pdf
+- React 18 with Vite
+- Tailwind CSS for styling
+- React Router for navigation
+- Axios for API communication
+- react-i18next for internationalization
+- Recharts for data visualization
+- react-pdf for document generation
+- Socket.IO client for real-time updates
 
 ### Backend
 
-- Node.js
-- Express
-- Mongoose
+- Node.js with Express
+- Mongoose for MongoDB integration
 - JWT authentication with HttpOnly cookies
-- Multer
-- Tesseract OCR
-- Zod validation
-- Pino logging
+- Multer for file uploads
+- Tesseract.js for OCR processing
+- Zod for runtime validation
+- Pino for structured logging
+- Socket.IO for WebSocket communication
 
 ### Infrastructure
 
-- MongoDB
-- Redis
-- BullMQ
-- Cloudinary
-- Docker
-- GitHub Actions CI/CD
-- Prometheus metrics
-- Nginx
+- MongoDB for data persistence
+- Redis for caching and queues
+- BullMQ for background job processing
+- Cloudinary for file storage
+- Docker for containerization
+- GitHub Actions for CI/CD
+- Prometheus for metrics collection
+- Nginx as reverse proxy
 
 ### AI Layer
 
-- LLM-based analysis
-- medical knowledge retrieval
-- vector-style context search for health guidance
+- Google Gemini 1.5 Flash for primary analysis
+- Groq LLaMA 3 70B for comparative analysis
+- Parallel AI execution with consensus scoring
+- Medical knowledge base integration
+- Vector-style context search for health guidance
 
 ## Architecture
 
 System flow:
 
-User -> React Frontend -> Express API -> Services Layer -> MongoDB / Redis / AI / Cloudinary
+```
+User → React Frontend → Nginx → Express API → Services Layer → MongoDB/Redis/AI/Cloudinary
+```
 
 Detailed runtime architecture:
 
 ```text
-Frontend (React + Vite)
+Frontend (React + Vite + Socket.IO)
   ↓
-Nginx / API Gateway
+Nginx Reverse Proxy + Static Serving
   ↓
-Express Backend
+Express Backend + Socket.IO Server
   ↓
 Services Layer
-  • AI Provider
-  • Redis Cache
-  • Queue Workers
-  • OCR Processing
-  • Cloudinary Storage
+  • AI Provider Service (Gemini + Groq)
+  • Redis Cache Service
+  • BullMQ Queue Workers
+  • OCR Processing Service
+  • Cloudinary Storage Service
   • Email Service
+  • Socket Service
   ↓
-MongoDB
+MongoDB + Redis Cluster
 ```
 
-Background processing:
+Background processing pipeline:
+
+```text
+Report Upload → Queue Job → OCR Extraction → AI Analysis (Parallel) → Comparison → Storage → Real-time Notification
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- MongoDB
+- Redis
+- Docker (optional)
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/ai-health-report-analyzer.git
+cd ai-health-report-analyzer
+```
+
+2. Install dependencies:
+```bash
+npm install:all
+```
+
+3. Set up environment variables (see `.env.example`)
+
+4. Start development servers:
+```bash
+npm run dev
+```
+
+### Docker Deployment
+
+```bash
+docker-compose up --build
+```
+
+## API Documentation
+
+API documentation is available at `/api/docs` when the server is running.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Security
+
+This application implements multiple security measures:
+- JWT authentication with secure cookies
+- Rate limiting and request validation
+- Input sanitization and XSS protection
+- Secure file upload handling
+- Generic error responses in production
+- Access logging with privacy considerations
+
+## Disclaimer
+
+This platform is for educational and informational purposes only. The AI analysis provided should not be considered medical advice or diagnosis. Always consult with qualified healthcare professionals for medical decisions.
 
 - report uploads can be processed inline or queued
 - Redis stores cached AI responses
