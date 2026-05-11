@@ -74,7 +74,12 @@ export const validateShareLink = async (token, ipAddress, userAgent) => {
     { token },
     {
       $inc: { accessCount: 1 },
-      $push: { accessLog: { accessedAt: new Date(), ipAddress, userAgent } }
+      $push: {
+        accessLog: {
+          $each: [{ accessedAt: new Date(), ipAddress, userAgent }],
+          $slice: -50
+        }
+      }
     },
     { new: true }
   ).populate("reportId", "-user -cloudinaryPublicId -parserMetadata").populate("userId", "firstName");
