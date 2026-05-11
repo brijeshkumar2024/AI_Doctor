@@ -189,19 +189,22 @@ const buildComparisonScore = (geminiFindings = [], groqFindings = []) => {
 };
 
 export const runComparisonAnalysis = async (ocrText) => {
-  const geminiStart = Date.now();
-  const groqStart = Date.now();
+  const withTiming = async (runner) => {
+    const startedAt = Date.now();
+    const result = await runner();
+    return {
+      result,
+      duration: Date.now() - startedAt
+    };
+  };
 
   const [geminiResult, groqResult] = await Promise.allSettled([
-    runGeminiAnalysis(ocrText),
-    runGroqAnalysis(ocrText)
+    withTiming(() => runGeminiAnalysis(ocrText)),
+    withTiming(() => runGroqAnalysis(ocrText))
   ]);
 
-  const geminiDuration = Date.now() - geminiStart;
-  const groqDuration = Date.now() - groqStart;
-
-  const gemini = geminiResult.status === "fulfilled" ? geminiResult.value : DEFAULT_ANALYSIS;
-  const groq = groqResult.status === "fulfilled" ? groqResult.value : DEFAULT_ANALYSIS;
+  const gemini = geminiResult.status === "fulfilled" ? geminiResult.value.result : DEFAULT_ANALYSIS;
+  const groq = groqResult.status === "fulfilled" ? groqResult.value.result : DEFAULT_ANALYSIS;
 
   const comparisonScore = buildComparisonScore(gemini.keyFindings, groq.keyFindings);
 
@@ -214,8 +217,8 @@ export const runComparisonAnalysis = async (ocrText) => {
       agreementRate: comparisonScore.agreementRate
     },
     processingTime: {
-      gemini: geminiDuration,
-      groq: groqDuration
+      gemini: geminiResult.status === "fulfilled" ? geminiResult.value.duration : 0,
+      groq: groqResult.status === "fulfilled" ? groqResult.value.duration : 0
     }
   };
 };
