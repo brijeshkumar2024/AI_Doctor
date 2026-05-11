@@ -7,6 +7,7 @@ import { parseMedicalValues, parsePrescriptionText } from "./parserService.js";
 import { classifyReport } from "./classificationService.js";
 import { extractLabValuesWithLLM } from "./labExtractionService.js";
 import { analyzePrescriptionWithAI, analyzeReportWithAI } from "./aiService.js";
+import { runComparisonAnalysis } from "./aiComparison.service.js";
 import { calculateRiskScoreDetails } from "./riskScoreService.js";
 import { buildDoctorStyleSummary, buildTimelineSummary } from "./summaryService.js";
 import { buildHealthTrends } from "./trendService.js";
@@ -62,6 +63,30 @@ const getUserDocument = async (userOrId) => {
   return User.findById(userOrId).lean();
 };
 
+const deriveLegacyAiAnalysis = (modelOutput = {}) => ({
+  summary: modelOutput.summary || "",
+  abnormalFindings: (modelOutput.keyFindings || [])
+    .filter((item) => item.status !== "normal")
+    .map((item) => `${item.parameter}: ${item.interpretation}`),
+  abnormalExplanations: (modelOutput.keyFindings || [])
+    .filter((item) => item.status !== "normal")
+    .map((item) => item.interpretation),
+  possibleReasons: (modelOutput.riskFlags || []).map((item) => item.explanation),
+  recommendations: modelOutput.recommendations || [],
+  riskFactors: (modelOutput.riskFlags || []).map((item) => item.risk),
+  gemini: modelOutput,
+  groq: {},
+  comparison: {
+    agreementRate: 0,
+    sharedFindingCount: 0,
+    consensusFindings: [],
+    divergentFindings: [],
+    overallConsensus: "low",
+    processingTime: { gemini: 0, groq: 0 }
+  },
+  completedAt: new Date()
+});
+
 export const processReportRecord = async ({ reportId, file }) => {
   const report = await Report.findById(reportId);
   if (!report) {
@@ -110,15 +135,41 @@ export const processReportRecord = async ({ reportId, file }) => {
       structuredValues,
       trendInsights: trends
     });
-    const aiAnalysis = await analyzeReportWithAI({
+    const fallbackAiAnalysis = await analyzeReportWithAI({
       structuredValues,
       reportType: llmExtracted.reportType || classification.reportType,
       language: user?.preferredLanguage,
       trendInsights: trends.map((trend) => trend.insight),
       riskFactors: riskDetails.factors
     });
-    const combinedRiskFactors = [...new Set([...(riskDetails.factors || []), ...(aiAnalysis.riskFactors || [])])];
-    const doctorSummary = buildDoctorStyleSummary(structuredValues, aiAnalysis);
+    const comparisonResult = await runComparisonAnalysis(ocrResult.cleanedText);
+    const primaryModel = comparisonResult.gemini.summary
+      ? comparisonResult.gemini
+      : comparisonResult.groq.summary
+        ? comparisonResult.groq
+        : null;
+    const comparisonRiskFactors = [
+      ...(comparisonResult.gemini.riskFlags || []).map((item) => item.risk),
+      ...(comparisonResult.groq.riskFlags || []).map((item) => item.risk)
+    ];
+    const combinedRiskFactors = [...new Set([...(riskDetails.factors || []), ...comparisonRiskFactors, ...(fallbackAiAnalysis.riskFactors || [])])];
+    const comparisonAiAnalysis = primaryModel
+      ? {
+          ...deriveLegacyAiAnalysis(primaryModel),
+          gemini: comparisonResult.gemini,
+          groq: comparisonResult.groq,
+          comparison: {
+            agreementRate: comparisonResult.comparisonScore.agreementRate,
+            sharedFindingCount: comparisonResult.comparisonScore.sharedFindingCount,
+            consensusFindings: comparisonResult.comparisonScore.consensusFindings,
+            divergentFindings: comparisonResult.comparisonScore.divergentFindings,
+            overallConsensus: comparisonResult.comparisonScore.overallConsensus,
+            processingTime: comparisonResult.processingTime
+          },
+          completedAt: new Date()
+        }
+      : fallbackAiAnalysis;
+    const doctorSummary = buildDoctorStyleSummary(structuredValues, comparisonAiAnalysis);
     const timelineSummary = buildTimelineSummary(trends, combinedRiskFactors);
 
     report.extractedText = ocrResult.rawText;
@@ -127,7 +178,7 @@ export const processReportRecord = async ({ reportId, file }) => {
     report.riskScore = riskDetails.score;
     report.riskFactors = combinedRiskFactors;
     report.structuredValues = structuredValues;
-    report.aiAnalysis = aiAnalysis;
+    report.aiAnalysis = comparisonAiAnalysis;
     report.doctorSummary = doctorSummary;
     report.timelineSummary = timelineSummary;
     report.alerts = buildAlertMessages(structuredValues);
