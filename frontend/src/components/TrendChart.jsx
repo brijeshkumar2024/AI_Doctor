@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea, ReferenceLine, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
-import { getParameterColor } from "../../utils/healthParams";
+import { getParameterColor } from "../utils/healthParams";
 
 const TrendChart = ({ parameter, unit, normalRange, dataPoints, trend }) => {
   const chartData = useMemo(() => {

@@ -13,6 +13,7 @@ import profileRoutes from "./routes/profileRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import sharedRoutes from "./routes/sharedRoutes.js";
 import trendsRoutes from "./routes/trends.js";
+import { protectedRouter as shareProtectedRoutes, publicRouter as sharePublicRoutes } from "./routes/share.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 import { applySecurityHeaders, sanitizeRequest } from "./middleware/securityMiddleware.js";
 import { metricsHandler, metricsMiddleware } from "./config/metrics.js";

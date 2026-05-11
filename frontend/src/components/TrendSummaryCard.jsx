@@ -1,4 +1,4 @@
-import { formatParameterName, getParameterIcon, getParameterColor } from "../../utils/healthParams";
+import { formatParameterName, getParameterIcon, getParameterColor } from "../utils/healthParams";
 
 const TrendSummaryCard = ({ parameter, unit, latestValue, latestStatus, trend, normalRange, dataPointCount }) => {
   const getStatusColor = (status) => {

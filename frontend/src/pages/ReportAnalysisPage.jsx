@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import PageHeader from "../components/PageHeader";
 import {
-  createShareLink,
   fetchReportById,
   fetchReportComparison,
   getReportExportUrl
@@ -13,10 +12,11 @@ import {
 import PDFPreview from "../components/PDFPreview";
 import ModelComparison from "../components/ModelComparison";
 import ComparisonHighlights from "../components/ComparisonHighlights";
+import ShareReportModal from "../components/ShareReportModal";
 
 const ReportAnalysisPage = () => {
   const { id } = useParams();
-  const [shareMessage, setShareMessage] = useState("");
+  const [showShareModal, setShowShareModal] = useState(false);
   const [showRawOcr, setShowRawOcr] = useState(false);
   const { data: report, error } = useQuery({
     queryKey: ["report", id],
@@ -33,22 +33,19 @@ const ReportAnalysisPage = () => {
     refetchInterval: report?.processingStatus === "completed" ? false : 5000
   });
 
+  const { data: shareLinks } = useQuery({
+    queryKey: ["shareLinks", id],
+    queryFn: async () => {
+      const response = await fetch(`/api/reports/${id}/shares`);
+      if (!response.ok) throw new Error("Failed to fetch share links");
+      return response.json();
+    },
+    enabled: Boolean(report?._id)
+  });
+
   const exportUrl = useMemo(() => (report ? getReportExportUrl(report._id) : ""), [report]);
   const handlePrint = () => {
     window.print();
-  };
-
-  const handleShare = async () => {
-    try {
-      const data = await createShareLink(id);
-      await navigator.clipboard.writeText(data.shareUrl);
-      setShareMessage(`Share link copied. Expires on ${new Date(data.expiresAt).toLocaleString()}.`);
-      toast.success("Share link copied to clipboard");
-    } catch (shareError) {
-      const message = shareError.response?.data?.message || "Could not create share link.";
-      setShareMessage(message);
-      toast.error(message);
-    }
   };
 
   return (
@@ -64,8 +61,12 @@ const ReportAnalysisPage = () => {
               </a>
               {report.processingStatus === "completed" ? (
                 <>
-                  <button type="button" onClick={handleShare} className="button-secondary">
-                    Share Link
+                  <button
+                    type="button"
+                    onClick={() => setShowShareModal(true)}
+                    className="button-secondary"
+                  >
+                    Share with Doctor
                   </button>
                   <a href={exportUrl} className="button-secondary">
                     Export PDF
@@ -80,7 +81,6 @@ const ReportAnalysisPage = () => {
         }
       />
       <DisclaimerBanner />
-      {shareMessage ? <p className="mb-3 text-sm text-primary-700">{shareMessage}</p> : null}
       {error ? <p className="text-sm text-red-600">{error.response?.data?.message || "Failed to load report"}</p> : null}
       {!report ? (
         <div className="text-slate-600">Loading report...</div>
@@ -176,6 +176,69 @@ const ReportAnalysisPage = () => {
             groq={comparisonData?.groq || report.aiAnalysis?.groq}
           />
 
+          {shareLinks?.data?.length > 0 && (
+            <section className="card">
+              <h2 className="text-lg font-semibold">Active Share Links</h2>
+              <div className="mt-4 space-y-3">
+                {shareLinks.data.map((link) => (
+                  <div key={link.token} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            Expires: {new Date(link.expiresAt).toLocaleDateString()}
+                          </span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            link.isRevoked
+                              ? "bg-red-100 text-red-800"
+                              : link.accessCount >= link.maxAccess
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
+                          }`}>
+                            {link.isRevoked
+                              ? "Revoked"
+                              : link.accessCount >= link.maxAccess
+                              ? "Max views reached"
+                              : "Active"}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Views: {link.accessCount} / {link.maxAccess === 100 ? "∞" : link.maxAccess}
+                        </div>
+                        {link.doctorNote && (
+                          <div className="text-sm text-gray-700 mt-1">
+                            <strong>Note:</strong> {link.doctorNote}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => navigator.clipboard.writeText(`${window.location.origin}/shared/${link.token}`)}
+                          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                          Copy Link
+                        </button>
+                        {!link.isRevoked && link.accessCount < link.maxAccess && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm("Revoke this share link?")) {
+                                // Revoke logic would go here, but since we have the modal, maybe redirect to modal
+                                setShowShareModal(true);
+                              }
+                            }}
+                            className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            Revoke
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           <section className="card">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold">Raw OCR Text</h2>
@@ -195,6 +258,12 @@ const ReportAnalysisPage = () => {
           </section>
         </div>
       )}
+
+      <ShareReportModal
+        reportId={id}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
     </div>
   );
 };

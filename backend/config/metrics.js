@@ -114,6 +114,24 @@ export const trendCalculationDurationMs = new client.Histogram({
   registers: [register]
 });
 
+export const shareLinksCreatedTotal = new client.Counter({
+  name: "share_links_created_total",
+  help: "Total number of share links created",
+  registers: [register]
+});
+
+export const shareLinksAccessedTotal = new client.Counter({
+  name: "share_links_accessed_total",
+  help: "Total number of share links accessed",
+  registers: [register]
+});
+
+export const shareLinksRevokedTotal = new client.Counter({
+  name: "share_links_revoked_total",
+  help: "Total number of share links revoked",
+  registers: [register]
+});
+
 export const applicationErrorCounter = new client.Counter({
   name: "ai_health_application_errors_total",
   help: "Application errors grouped by source and status code",

@@ -35,3 +35,10 @@ export const uploadLimiter = createRateLimiter(
   "Too many upload requests. Please try again later.",
   userAwareKeyGenerator
 );
+
+export const shareCreateLimiter = createRateLimiter(
+  15 * 60 * 1000,
+  5,
+  "Too many share link creation requests. Please try again later.",
+  userAwareKeyGenerator
+);

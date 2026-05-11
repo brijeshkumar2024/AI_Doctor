@@ -1,33 +1,19 @@
 import express from "express";
 import { body } from "express-validator";
-import {
-  createReportShareLink,
-  exportReportSummary,
-  getReportComparison,
-  getReportById,
-  getReports,
-  uploadReport
-} from "../controllers/reportController.js";
+import ShareLink from "../models/ShareLink.js";
+import { createShareLink, validateShareLink, revokeShareLink, getShareLinksForReport } from "../services/shareLink.service.js";
 import { protect } from "../middleware/authMiddleware.js";
-import { upload, enforceSafeUpload } from "../middleware/uploadMiddleware.js";
-import { uploadLimiter, shareCreateLimiter } from "../middleware/rateLimitMiddleware.js";
 import validateRequest from "../middleware/validateRequest.js";
-import { paginationValidation, shareReportValidation } from "../utils/validators.js";
-import { createShareLink, revokeShareLink, getShareLinksForReport } from "../services/shareLink.service.js";
-import { shareLinksCreatedTotal, shareLinksRevokedTotal } from "../config/metrics.js";
+import { shareLinksCreatedTotal, shareLinksAccessedTotal, shareLinksRevokedTotal } from "../config/metrics.js";
 
 const router = express.Router();
 
-router.use(protect);
-router.get("/", paginationValidation, validateRequest, getReports);
-router.post("/", uploadLimiter, upload.single("report"), enforceSafeUpload, uploadReport);
-router.post("/:id/share-link", shareReportValidation, validateRequest, createReportShareLink);
-router.get("/:id/export-summary", exportReportSummary);
-router.get("/:id/comparison", getReportComparison);
-router.get("/:id", getReportById);
+// Protected routes (require auth)
+const protectedRouter = express.Router();
+protectedRouter.use(protect);
 
-// New share endpoints
-router.post("/:id/share", shareCreateLimiter, [
+// POST /api/reports/:id/share
+protectedRouter.post("/reports/:id/share", [
   body("expiresInDays").isInt({ min: 1, max: 30 }).withMessage("expiresInDays must be between 1 and 30"),
   body("maxAccess").isInt({ min: 1, max: 100 }).withMessage("maxAccess must be between 1 and 100"),
   body("doctorNote").optional().isLength({ max: 500 }).withMessage("doctorNote must be less than 500 characters")
@@ -53,7 +39,8 @@ router.post("/:id/share", shareCreateLimiter, [
   }
 });
 
-router.delete("/:id/share/:token", async (req, res) => {
+// DELETE /api/reports/:id/share/:token
+protectedRouter.delete("/reports/:id/share/:token", async (req, res) => {
   try {
     const { token } = req.params;
     const userId = req.user._id.toString();
@@ -74,7 +61,8 @@ router.delete("/:id/share/:token", async (req, res) => {
   }
 });
 
-router.get("/:id/shares", async (req, res) => {
+// GET /api/reports/:id/shares
+protectedRouter.get("/reports/:id/shares", async (req, res) => {
   try {
     const { id: reportId } = req.params;
     const userId = req.user._id.toString();
@@ -93,4 +81,28 @@ router.get("/:id/shares", async (req, res) => {
   }
 });
 
-export default router;
+// Public routes (no auth required)
+// GET /api/shared/:token
+router.get("/shared/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const userAgent = req.headers['user-agent'] || '';
+
+    const result = await validateShareLink(token, ipAddress, userAgent);
+
+    shareLinksAccessedTotal.inc();
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+export { protectedRouter, router as publicRouter };

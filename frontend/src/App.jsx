@@ -16,7 +16,7 @@ import ProfilePage from "./pages/ProfilePage";
 import LanguageSettingsPage from "./pages/LanguageSettingsPage";
 import HealthTrends from "./pages/HealthTrends";
 import NotFoundPage from "./pages/NotFoundPage";
-import SharedReportPage from "./pages/SharedReportPage";
+import SharedReport from "./pages/SharedReport";
 
 const App = () => (
   <Layout>
@@ -26,7 +26,7 @@ const App = () => (
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/shared-report/:token" element={<SharedReportPage />} />
+      <Route path="/shared/:token" element={<SharedReport />} />
       <Route
         path="/dashboard"
         element={

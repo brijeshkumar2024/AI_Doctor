@@ -62,3 +62,16 @@ export const getParameterIcon = (param) => {
 export const getParameterColor = (param) => {
   return HEALTH_PARAMS[param]?.color || "#6b7280";
 };
+
+export const PARAMETER_PATTERNS = {
+  bloodGlucose: ["glucose", "blood glucose", "fasting glucose", "random glucose"],
+  cholesterolTotal: ["total cholesterol", "cholesterol total", "chol total"],
+  hdl: ["hdl", "hdl cholesterol", "good cholesterol"],
+  ldl: ["ldl", "ldl cholesterol", "bad cholesterol"],
+  hemoglobin: ["hemoglobin", "hb", "hgb"],
+  systolicBP: ["systolic", "sys bp", "sbp"],
+  diastolicBP: ["diastolic", "dia bp", "dbp"],
+  creatinine: ["creatinine", "serum creatinine"],
+  tsh: ["tsh", "thyroid stimulating hormone"],
+  wbc: ["wbc", "white blood cells", "white blood cell count"]
+};

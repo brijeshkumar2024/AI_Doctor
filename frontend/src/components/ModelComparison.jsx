@@ -1,5 +1,7 @@
 import MiniTrendSparkline from "./MiniTrendSparkline";
 import { PARAMETER_PATTERNS } from "../utils/healthParams";
+
+const statusBadgeClass = {
   normal: "bg-emerald-100 text-emerald-800",
   low: "bg-amber-100 text-amber-800",
   high: "bg-orange-100 text-orange-800",
@@ -27,7 +29,7 @@ const ConfidenceRing = ({ score = 0 }) => {
   );
 };
 
-const ModelColumn = ({ title, badge, data }) => (
+const ModelColumn = ({ title, badge, data, isShared = false }) => (
   <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="mb-4 flex items-center justify-between gap-3">
       <div>
@@ -50,7 +52,7 @@ const ModelColumn = ({ title, badge, data }) => (
               <th className="py-2">Parameter</th>
               <th className="py-2">Value</th>
               <th className="py-2">Status</th>
-              <th className="py-2">Trend</th>
+              {!isShared && <th className="py-2">Trend</th>}
             </tr>
           </thead>
           <tbody>
@@ -65,7 +67,7 @@ const ModelColumn = ({ title, badge, data }) => (
                       {item.status}
                     </span>
                   </td>
-                  {isTrackedParameter && (
+                  {!isShared && isTrackedParameter && (
                     <td className="py-2 pl-3">
                       <MiniTrendSparkline parameter={item.parameter} />
                     </td>
@@ -106,11 +108,17 @@ const ModelColumn = ({ title, badge, data }) => (
   </article>
 );
 
-const ModelComparison = ({ gemini, groq }) => (
-  <section className="grid gap-4 lg:grid-cols-2">
-    <ModelColumn title="Gemini 1.5 Flash" badge="Google Gemini" data={gemini} />
-    <ModelColumn title="LLaMA 3 70B" badge="Groq" data={groq} />
-  </section>
-);
+const ModelComparison = ({ gemini, groq, isShared = false, report }) => {
+  // For shared reports, use the report's aiAnalysis
+  const geminiData = gemini || report?.aiAnalysis?.gemini;
+  const groqData = groq || report?.aiAnalysis?.groq;
+
+  return (
+    <section className="grid gap-4 lg:grid-cols-2">
+      <ModelColumn title="Gemini 1.5 Flash" badge="Google Gemini" data={geminiData} isShared={isShared} />
+      <ModelColumn title="LLaMA 3 70B" badge="Groq" data={groqData} isShared={isShared} />
+    </section>
+  );
+};
 
 export default ModelComparison;
