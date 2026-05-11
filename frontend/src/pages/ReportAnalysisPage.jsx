@@ -20,6 +20,9 @@ const ReportAnalysisPage = () => {
   });
 
   const exportUrl = useMemo(() => (report ? getReportExportUrl(report._id) : ""), [report]);
+  const handlePrint = () => {
+    window.print();
+  };
 
   const handleShare = async () => {
     try {
@@ -53,6 +56,9 @@ const ReportAnalysisPage = () => {
                   <a href={exportUrl} className="button-secondary">
                     Export PDF
                   </a>
+                  <button type="button" onClick={handlePrint} className="button-secondary">
+                    Download Report as PDF
+                  </button>
                 </>
               ) : null}
             </div>
