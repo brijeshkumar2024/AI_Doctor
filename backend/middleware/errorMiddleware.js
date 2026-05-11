@@ -10,11 +10,12 @@ export const notFound = (req, _res, next) => {
 export const errorHandler = (error, req, res, _next) => {
   const statusCode = error.statusCode || 500;
   const details = Array.isArray(error.details) && error.details.length > 0 ? error.details : undefined;
-  const message = error.message || "Server error";
+  const isOperational = Boolean(error.errorCode) || statusCode < 500;
+  const safeMessage = isOperational ? error.message || "Server error" : "Internal server error";
   const payload = {
     success: false,
     data: {},
-    message,
+    message: safeMessage,
     error: error.errorCode || "REQUEST_FAILED",
     timestamp: new Date().toISOString(),
     path: req.originalUrl,
