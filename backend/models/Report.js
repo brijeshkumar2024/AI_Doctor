@@ -77,7 +77,112 @@ const reportSchema = new mongoose.Schema(
       abnormalExplanations: { type: [String], default: [] },
       possibleReasons: { type: [String], default: [] },
       recommendations: { type: [String], default: [] },
-      riskFactors: { type: [String], default: [] }
+      riskFactors: { type: [String], default: [] },
+      gemini: {
+        summary: { type: String, default: "" },
+        keyFindings: {
+          type: [
+            {
+              parameter: String,
+              value: String,
+              status: {
+                type: String,
+                enum: ["normal", "low", "high", "critical"],
+                default: "normal"
+              },
+              interpretation: String
+            }
+          ],
+          default: []
+        },
+        riskFlags: {
+          type: [
+            {
+              risk: String,
+              severity: {
+                type: String,
+                enum: ["low", "medium", "high"],
+                default: "low"
+              },
+              explanation: String
+            }
+          ],
+          default: []
+        },
+        recommendations: {
+          type: [String],
+          default: []
+        },
+        confidenceScore: {
+          type: Number,
+          default: 0
+        }
+      },
+      groq: {
+        summary: { type: String, default: "" },
+        keyFindings: {
+          type: [
+            {
+              parameter: String,
+              value: String,
+              status: {
+                type: String,
+                enum: ["normal", "low", "high", "critical"],
+                default: "normal"
+              },
+              interpretation: String
+            }
+          ],
+          default: []
+        },
+        riskFlags: {
+          type: [
+            {
+              risk: String,
+              severity: {
+                type: String,
+                enum: ["low", "medium", "high"],
+                default: "low"
+              },
+              explanation: String
+            }
+          ],
+          default: []
+        },
+        recommendations: {
+          type: [String],
+          default: []
+        },
+        confidenceScore: {
+          type: Number,
+          default: 0
+        }
+      },
+      comparison: {
+        agreementRate: { type: Number, default: 0 },
+        sharedFindingCount: { type: Number, default: 0 },
+        consensusFindings: {
+          type: [mongoose.Schema.Types.Mixed],
+          default: []
+        },
+        divergentFindings: {
+          type: [mongoose.Schema.Types.Mixed],
+          default: []
+        },
+        overallConsensus: {
+          type: String,
+          enum: ["high", "medium", "low"],
+          default: "low"
+        },
+        processingTime: {
+          gemini: { type: Number, default: 0 },
+          groq: { type: Number, default: 0 }
+        }
+      },
+      completedAt: {
+        type: Date,
+        default: null
+      }
     },
     doctorSummary: {
       type: [String],
