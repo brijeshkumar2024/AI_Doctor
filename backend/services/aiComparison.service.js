@@ -141,6 +141,7 @@ const buildComparisonScore = (geminiFindings = [], groqFindings = []) => {
   if (sharedParameters.length === 0) {
     return {
       agreementRate: 0,
+      sharedFindingCount: 0,
       consensusFindings: [],
       divergentFindings: [],
       overallConsensus: "low"
@@ -164,8 +165,10 @@ const buildComparisonScore = (geminiFindings = [], groqFindings = []) => {
       return;
     }
 
-    divergentFindings.push({
+      divergentFindings.push({
       parameter: geminiItem.parameter,
+      geminiValue: geminiItem.value,
+      groqValue: groqItem.value,
       gemini: {
         status: geminiItem.status,
         interpretation: geminiItem.interpretation
@@ -182,6 +185,7 @@ const buildComparisonScore = (geminiFindings = [], groqFindings = []) => {
 
   return {
     agreementRate,
+    sharedFindingCount: sharedParameters.length,
     consensusFindings,
     divergentFindings,
     overallConsensus
