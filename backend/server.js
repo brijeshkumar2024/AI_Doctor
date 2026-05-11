@@ -13,7 +13,6 @@ let server;
 let io;
 
 export { io };
-let io;
 
 const shutdown = async (signal) => {
   logger.info({ signal }, "Shutdown signal received");

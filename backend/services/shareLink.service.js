@@ -4,7 +4,7 @@ import QRCode from "qrcode";
 import ShareLink from "../models/ShareLink.js";
 import Report from "../models/Report.js";
 import User from "../models/User.js";
-import { AppError } from "../utils/AppError.js";
+import AppError from "../utils/AppError.js";
 import { logger } from "../utils/logger.js";
 
 export const generateShareToken = () => {

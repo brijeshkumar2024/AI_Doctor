@@ -1,5 +1,5 @@
-import { verifyAccessToken } from "./token.js";
-import { logger } from "./logger.js";
+import { verifyAccessToken } from "../utils/token.js";
+import { logger } from "../utils/logger.js";
 import { activeConnectionsGauge, socketEventsCounter } from "../config/metrics.js";
 
 let _io = null;
