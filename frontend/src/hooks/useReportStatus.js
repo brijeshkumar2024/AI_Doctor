@@ -21,7 +21,7 @@ export const useReportStatus = (reportId, initialStatus) => {
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/reports/${reportId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+          credentials: 'include'
         })
         const data = await res.json()
         if (data.success) {
