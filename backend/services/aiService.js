@@ -11,7 +11,7 @@ import { sendAiRequest } from "./aiProviderService.js";
 import { retrieveMedicalContext } from "./ragService.js";
 import { buildCacheKey, getCachedJson, setCachedJson } from "./cacheService.js";
 import { logger } from "../utils/logger.js";
-import { aiRequestDurationSeconds } from "../config/metrics.js";
+import { aiAnalysisDurationMs, aiRequestDurationSeconds } from "../config/metrics.js";
 
 const translateLanguage = (language = "en") =>
   language === "hi" ? "Hindi" : language === "bn" ? "Bengali" : "English";
@@ -56,6 +56,7 @@ const callStructuredAi = async ({
   const endTimer = aiRequestDurationSeconds.startTimer({
     operation: metricLabel
   });
+  const startedAt = Date.now();
 
   try {
     const content = await sendAiRequest({
@@ -74,13 +75,14 @@ const callStructuredAi = async ({
 
     return validated;
   } catch (error) {
-    logger.warn("Structured AI request failed", {
+    logger.warn({
       message: error.message,
       operation: metricLabel
-    });
+    }, "Structured AI request failed");
     return fallback;
   } finally {
     endTimer();
+    aiAnalysisDurationMs.observe({ operation: metricLabel }, Date.now() - startedAt);
   }
 };
 

@@ -9,27 +9,36 @@ export const notFound = (req, _res, next) => {
 
 export const errorHandler = (error, req, res, _next) => {
   const statusCode = error.statusCode || 500;
+  const details = Array.isArray(error.details) && error.details.length > 0 ? error.details : undefined;
+  const message = error.message || "Server error";
   const payload = {
     success: false,
-    message: error.message || "Server error",
+    data: {},
+    message,
+    error: error.errorCode || "REQUEST_FAILED",
     timestamp: new Date().toISOString(),
     path: req.originalUrl,
     requestId: req.id
   };
+
+  if (details) {
+    payload.errors = details;
+  }
 
   applicationErrorCounter.inc({
     source: "express",
     status_code: String(statusCode)
   });
 
-  logger.error("Request failed", {
+  logger.error({
     requestId: req.id,
     statusCode,
     path: req.originalUrl,
-    message: error.message,
+    message,
     method: req.method,
+    details,
     stack: error.stack
-  });
+  }, "Request failed");
 
   if (process.env.NODE_ENV !== "production") {
     payload.stack = error.stack;

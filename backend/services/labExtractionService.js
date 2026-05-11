@@ -66,9 +66,9 @@ export const extractLabValuesWithLLM = async ({
       }
     };
   } catch (error) {
-    logger.warn("LLM lab extraction failed", {
+    logger.warn({
       message: error.message
-    });
+    }, "LLM lab extraction failed");
 
     return {
       reportType,

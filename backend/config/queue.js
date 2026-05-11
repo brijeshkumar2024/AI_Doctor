@@ -49,7 +49,7 @@ export const getQueueEvents = (name) => {
   if (!queueEventCache.has(name)) {
     const queueEvents = new QueueEvents(name, { connection: getConnection() });
     queueEvents.on("failed", ({ jobId, failedReason }) => {
-      logger.warn("Queue job failed", { queue: name, jobId, failedReason });
+      logger.warn({ queue: name, jobId, failedReason }, "Queue job failed");
     });
     queueEventCache.set(name, queueEvents);
   }

@@ -24,9 +24,9 @@ export const getRedisClient = () => {
     });
 
     redisClient.on("error", (error) => {
-      logger.warn("Redis connection error", {
+      logger.warn({
         message: error.message
-      });
+      }, "Redis connection error");
     });
   }
 
@@ -47,9 +47,9 @@ export const connectRedis = async () => {
         service: "redis",
         operation: "connect"
       });
-      logger.warn("Redis failed to connect", {
+      logger.warn({
         message: error.message
-      });
+      }, "Redis failed to connect");
       throw error;
     }
   }

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import UploadReportPage from "../pages/UploadReportPage";
 
@@ -24,15 +25,18 @@ vi.mock("../services/reportService", () => ({
 
 describe("UploadReportPage", () => {
   it("uploads a selected report", async () => {
+    const queryClient = new QueryClient();
     render(
-      <MemoryRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true
-        }}
-      >
-        <UploadReportPage />
-      </MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true
+          }}
+        >
+          <UploadReportPage />
+        </MemoryRouter>
+      </QueryClientProvider>
     );
 
     const file = new File(["report"], "report.png", { type: "image/png" });

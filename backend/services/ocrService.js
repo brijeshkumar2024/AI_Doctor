@@ -1,6 +1,6 @@
 import pdfParse from "pdf-parse";
 import Tesseract from "tesseract.js";
-import { ocrProcessingDurationSeconds } from "../config/metrics.js";
+import { ocrProcessingDurationMs, ocrProcessingDurationSeconds } from "../config/metrics.js";
 
 const normalizeLine = (line = "") =>
   line
@@ -36,6 +36,7 @@ export const extractTableRows = (text = "") =>
 export const extractTextFromFile = async (file) => {
   const fileType = file.mimetype === "application/pdf" ? "pdf" : "image";
   const endTimer = ocrProcessingDurationSeconds.startTimer({ file_type: fileType });
+  const startTime = Date.now();
 
   try {
   if (file.mimetype === "application/pdf") {
@@ -69,5 +70,6 @@ export const extractTextFromFile = async (file) => {
   };
   } finally {
     endTimer();
+    ocrProcessingDurationMs.observe(Date.now() - startTime);
   }
 };

@@ -1,4 +1,4 @@
-import { backgroundJobCounter } from "../config/metrics.js";
+import { activeQueueJobs, backgroundJobCounter } from "../config/metrics.js";
 import { createQueueWorker, getQueue, getQueueEvents, isQueueEnabled, QUEUE_NAMES } from "../config/queue.js";
 import { processPrescriptionRecord, processReportRecord } from "./reportProcessingService.js";
 import { logger } from "../utils/logger.js";
@@ -45,6 +45,7 @@ export const startQueueWorkers = () => {
   }
 
   const reportWorker = createQueueWorker(QUEUE_NAMES.reportProcessing, async (job) => {
+    activeQueueJobs.inc({ queue: QUEUE_NAMES.reportProcessing });
     try {
       const result = await processReportRecord({
         ...job.data,
@@ -58,10 +59,13 @@ export const startQueueWorkers = () => {
     } catch (error) {
       backgroundJobCounter.inc({ queue: QUEUE_NAMES.reportProcessing, status: "failed" });
       throw error;
+    } finally {
+      activeQueueJobs.dec({ queue: QUEUE_NAMES.reportProcessing });
     }
   });
 
   const prescriptionWorker = createQueueWorker(QUEUE_NAMES.prescriptionProcessing, async (job) => {
+    activeQueueJobs.inc({ queue: QUEUE_NAMES.prescriptionProcessing });
     try {
       const result = await processPrescriptionRecord({
         ...job.data,
@@ -75,6 +79,8 @@ export const startQueueWorkers = () => {
     } catch (error) {
       backgroundJobCounter.inc({ queue: QUEUE_NAMES.prescriptionProcessing, status: "failed" });
       throw error;
+    } finally {
+      activeQueueJobs.dec({ queue: QUEUE_NAMES.prescriptionProcessing });
     }
   });
 

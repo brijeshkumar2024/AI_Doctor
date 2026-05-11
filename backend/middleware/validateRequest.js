@@ -4,8 +4,14 @@ const validateRequest = (req, _res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    const error = new Error(errors.array()[0].msg);
+    const details = errors.array().map(({ msg, path, location }) => ({
+      message: msg,
+      field: path,
+      location
+    }));
+    const error = new Error(details[0].message);
     error.statusCode = 400;
+    error.details = details;
     return next(error);
   }
 
@@ -13,4 +19,3 @@ const validateRequest = (req, _res, next) => {
 };
 
 export default validateRequest;
-

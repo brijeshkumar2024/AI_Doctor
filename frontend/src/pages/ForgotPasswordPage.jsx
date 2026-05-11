@@ -23,10 +23,11 @@ const ForgotPasswordPage = () => {
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="card">
-        <h1 className="text-2xl font-semibold">Forgot Password</h1>
-        <p className="mt-2 text-slate-600">Enter your email to generate a password reset link.</p>
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+      <div className="form-shell">
+        <p className="eyebrow">Account recovery</p>
+        <h1 className="section-title mt-3 text-4xl font-semibold tracking-[-0.03em]">Forgot Password</h1>
+        <p className="mt-3 subtle-text">Enter your email to generate a password reset link.</p>
+        <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <FormInput
             label="Email"
             type="email"
@@ -40,15 +41,14 @@ const ForgotPasswordPage = () => {
             Send Reset Link
           </button>
         </form>
-        <p className="mt-4 text-sm text-slate-600">
+        <p className="mt-6 text-sm text-slate-600">
           <Link to="/login" className="font-medium text-primary-700">
             Back to login
           </Link>
         </p>
       </div>
     </div>
-  );
+);
 };
 
 export default ForgotPasswordPage;
-

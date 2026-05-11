@@ -3,7 +3,12 @@ import { useTranslation } from "react-i18next";
 import useAuth from "../hooks/useAuth";
 
 const navLinkClass = ({ isActive }) =>
-  `rounded-md px-3 py-2 text-sm ${isActive ? "bg-primary-50 text-primary-700" : "text-slate-600 hover:bg-slate-100"}`;
+  [
+    "rounded-full px-4 py-2 text-sm font-medium transition duration-200",
+    isActive
+      ? "bg-primary-700 text-white shadow-[0_10px_24px_rgba(28,71,66,0.18)]"
+      : "text-slate-600 hover:bg-white/80 hover:text-slate-900"
+  ].join(" ");
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -16,10 +21,16 @@ const Navbar = () => {
   };
 
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
-        <Link to={user ? "/dashboard" : "/"} className="text-lg font-semibold text-slate-900">
-          {t("appName")}
+    <header className="sticky top-0 z-20 px-4 pt-4 sm:px-6 lg:px-8">
+      <div className="nav-shell mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-5">
+        <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-700 text-sm font-bold text-white shadow-[0_14px_28px_rgba(28,71,66,0.24)]">
+            AI
+          </span>
+          <span>
+            <span className="eyebrow block">Private Health OS</span>
+            <span className="mt-1 block text-base font-semibold text-slate-900">{t("appName")}</span>
+          </span>
         </Link>
         <nav className="flex flex-wrap items-center gap-2">
           {user ? (

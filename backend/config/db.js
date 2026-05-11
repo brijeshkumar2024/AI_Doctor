@@ -28,9 +28,9 @@ export const getDatabaseStatus = () => ({
 });
 
 export const ensureDatabaseIndexes = async () => {
-  logger.info("Starting MongoDB index creation", {
+  logger.info({
     modelCount: indexedModels.length
-  });
+  }, "Starting MongoDB index creation");
 
   const results = [];
 
@@ -42,7 +42,7 @@ export const ensureDatabaseIndexes = async () => {
     });
   }
 
-  logger.info("MongoDB index creation complete", { results });
+  logger.info({ results }, "MongoDB index creation complete");
   return results;
 };
 
@@ -72,7 +72,7 @@ const connectDB = async () => {
         socketTimeoutMS: Number(process.env.MONGODB_SOCKET_TIMEOUT_MS || 45000)
       });
 
-      logger.info("MongoDB connected", getDatabaseStatus());
+      logger.info(getDatabaseStatus(), "MongoDB connected");
 
       if (shouldEnsureIndexes) {
         await ensureDatabaseIndexes();
@@ -81,11 +81,11 @@ const connectDB = async () => {
       return mongoose.connection;
     } catch (error) {
       lastError = error;
-      logger.warn("MongoDB connection attempt failed", {
+      logger.warn({
         attempt,
         maxRetries,
         message: error.message
-      });
+      }, "MongoDB connection attempt failed");
 
       if (attempt < maxRetries) {
         await wait(retryDelayMs);
@@ -97,13 +97,13 @@ const connectDB = async () => {
 };
 
 mongoose.connection.on("disconnected", () => {
-  logger.warn("MongoDB disconnected", getDatabaseStatus());
+  logger.warn(getDatabaseStatus(), "MongoDB disconnected");
 });
 
 mongoose.connection.on("error", (error) => {
-  logger.error("MongoDB connection error", {
+  logger.error({
     message: error.message
-  });
+  }, "MongoDB connection error");
 });
 
 export const closeDBConnection = async () => {

@@ -29,9 +29,9 @@ export const uploadBufferToCloudinary = (buffer, folder, fileName, resourceType 
             service: "cloudinary",
             operation: "upload"
           });
-          logger.warn("Cloudinary upload failed", {
+          logger.warn({
             message: error.message
-          });
+          }, "Cloudinary upload failed");
           reject(error);
         } else {
           resolve(result);
@@ -54,10 +54,10 @@ export const deleteCloudinaryAsset = async (publicId, resourceType = "image") =>
       service: "cloudinary",
       operation: "delete"
     });
-    logger.warn("Cloudinary asset deletion failed", {
+    logger.warn({
       message: error.message,
       publicId
-    });
+    }, "Cloudinary asset deletion failed");
     throw error;
   }
 };

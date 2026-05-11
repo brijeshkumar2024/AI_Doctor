@@ -31,10 +31,10 @@ export const getServiceStatusSnapshot = async ({ workerCount = 0 } = {}) => {
 export const logStartupStatus = async ({ context = "server", workerCount = 0 } = {}) => {
   const status = await getServiceStatusSnapshot({ workerCount });
 
-  logger.info("Subsystem startup status", {
+  logger.info({
     context,
     services: status
-  });
+  }, "Subsystem startup status");
 
   return status;
 };

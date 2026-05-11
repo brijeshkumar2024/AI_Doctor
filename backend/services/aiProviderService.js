@@ -45,7 +45,7 @@ export const sendAiRequest = async ({ messages, responseFormat }) => {
         service: "ai_provider",
         operation: "gemini_request"
       });
-      logger.warn("Gemini request failed", { message: error.message });
+      logger.warn({ message: error.message }, "Gemini request failed");
       throw error;
     }
   }
@@ -58,7 +58,7 @@ export const sendAiRequest = async ({ messages, responseFormat }) => {
         service: "ai_provider",
         operation: "openai_request"
       });
-      logger.warn("OpenAI request failed", { message: error.message });
+      logger.warn({ message: error.message }, "OpenAI request failed");
       throw error;
     }
   }

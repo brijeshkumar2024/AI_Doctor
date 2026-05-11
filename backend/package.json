@@ -8,7 +8,7 @@
     "dev": "nodemon server.js",
     "worker": "node worker.js",
     "start": "node server.js",
-    "lint": "../node_modules/.bin/eslint . --ext .js",
+    "lint": "eslint . --ext .js",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch"
   },

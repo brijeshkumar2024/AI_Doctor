@@ -9,7 +9,7 @@ import { logger } from "./utils/logger.js";
 let workers = [];
 
 const shutdown = async (signal) => {
-  logger.info("Worker shutdown signal received", { signal });
+  logger.info({ signal }, "Worker shutdown signal received");
   await Promise.all(workers.map((worker) => worker.close()));
   await closeQueues();
   await closeRedis();
@@ -22,16 +22,16 @@ const start = async () => {
   await connectRedis();
   workers = startQueueWorkers();
   await logStartupStatus({ context: "worker", workerCount: workers.length });
-  logger.info("Background worker started", { workerCount: workers.length });
+  logger.info({ workerCount: workers.length }, "Background worker started");
 };
 
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 start().catch((error) => {
-  logger.error("Failed to start worker", {
+  logger.error({
     message: error.message,
     stack: error.stack
-  });
+  }, "Failed to start worker");
   process.exit(1);
 });

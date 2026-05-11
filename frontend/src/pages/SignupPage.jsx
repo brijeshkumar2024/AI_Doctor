@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 import FormInput from "../components/FormInput";
 import useAuth from "../hooks/useAuth";
 
@@ -33,19 +34,42 @@ const SignupPage = () => {
         ...form,
         age: form.age ? Number(form.age) : undefined
       });
+      toast.success("Account created successfully");
       navigate("/dashboard");
     } catch (submitError) {
-      setError(submitError.response?.data?.message || "Signup failed");
+      const message = submitError.response?.data?.message || "Signup failed";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="card">
-        <h1 className="text-2xl font-semibold">{t("signup")}</h1>
-        <form className="mt-6 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+    <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.88fr_1.12fr]">
+      <section className="hero-panel card h-fit">
+        <p className="eyebrow">New account</p>
+        <h1 className="section-title mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-900">
+          Set up a clean, premium health workspace in minutes.
+        </h1>
+        <p className="mt-4 max-w-md subtle-text">
+          Create your account once, then keep reports, prescriptions, language preferences, and AI guidance organized in one place.
+        </p>
+        <div className="mt-8 space-y-4">
+          <div className="rounded-[24px] border border-white/70 bg-white/70 p-4">
+            <p className="text-sm font-semibold text-slate-900">Thoughtful defaults</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Start simple now and fill in profile details only when they help later analysis.</p>
+          </div>
+          <div className="rounded-[24px] border border-white/70 bg-white/70 p-4">
+            <p className="text-sm font-semibold text-slate-900">Language-ready</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Choose your preferred interface language from the start.</p>
+          </div>
+        </div>
+      </section>
+      <div className="form-shell">
+        <p className="eyebrow">Profile setup</p>
+        <h2 className="section-title mt-3 text-4xl font-semibold tracking-[-0.03em]">{t("signup")}</h2>
+        <form className="mt-8 grid gap-5 md:grid-cols-2" onSubmit={handleSubmit}>
           <FormInput
             label={t("name")}
             value={form.name}
@@ -73,7 +97,7 @@ const SignupPage = () => {
             onChange={(event) => setForm({ ...form, age: event.target.value })}
           />
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">{t("gender")}</span>
+            <span className="mb-2 block text-sm font-semibold text-slate-700">{t("gender")}</span>
             <select
               className="input"
               value={form.gender}
@@ -86,7 +110,7 @@ const SignupPage = () => {
             </select>
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">{t("preferredLanguage")}</span>
+            <span className="mb-2 block text-sm font-semibold text-slate-700">{t("preferredLanguage")}</span>
             <select
               className="input"
               value={form.preferredLanguage}
@@ -128,7 +152,7 @@ const SignupPage = () => {
             {loading ? t("loading") : t("signup")}
           </button>
         </form>
-        <p className="mt-4 text-sm text-slate-600">
+        <p className="mt-6 text-sm text-slate-600">
           Already have an account?{" "}
           <Link to="/login" className="font-medium text-primary-700">
             {t("login")}

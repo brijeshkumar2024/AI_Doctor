@@ -7,6 +7,30 @@ export const signupValidation = [
   body("password")
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters"),
+  body("age")
+    .optional()
+    .isInt({ min: 1, max: 120 })
+    .withMessage("Age must be a whole number between 1 and 120"),
+  body("gender")
+    .optional()
+    .isIn(["male", "female", "other", ""])
+    .withMessage("Gender must be male, female, other, or empty"),
+  body("height")
+    .optional()
+    .isLength({ max: 20 })
+    .withMessage("Height must be 20 characters or fewer"),
+  body("weight")
+    .optional()
+    .isLength({ max: 20 })
+    .withMessage("Weight must be 20 characters or fewer"),
+  body("medicalHistory")
+    .optional()
+    .isLength({ max: 2000 })
+    .withMessage("Medical history must be 2000 characters or fewer"),
+  body("allergies")
+    .optional()
+    .isLength({ max: 2000 })
+    .withMessage("Allergies must be 2000 characters or fewer"),
   body("preferredLanguage")
     .optional()
     .isIn(["en", "hi", "bn"])
@@ -84,6 +108,12 @@ export const signupSchema = z.object({
   name: z.string().trim().min(1),
   email: z.string().email(),
   password: z.string().min(8),
+  age: z.number().int().positive().max(120).optional(),
+  gender: z.enum(["male", "female", "other", ""]).optional(),
+  height: z.string().max(20).optional(),
+  weight: z.string().max(20).optional(),
+  medicalHistory: z.string().max(2000).optional(),
+  allergies: z.string().max(2000).optional(),
   preferredLanguage: z.enum(["en", "hi", "bn"]).optional()
 });
 

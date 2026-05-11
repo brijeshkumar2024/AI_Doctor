@@ -25,10 +25,11 @@ const ResetPasswordPage = () => {
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="card">
-        <h1 className="text-2xl font-semibold">Reset Password</h1>
-        <p className="mt-2 text-slate-600">Set a new password using the reset token from your link.</p>
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+      <div className="form-shell">
+        <p className="eyebrow">Password reset</p>
+        <h1 className="section-title mt-3 text-4xl font-semibold tracking-[-0.03em]">Reset Password</h1>
+        <p className="mt-3 subtle-text">Set a new password using the reset token from your link.</p>
+        <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <FormInput
             label="New Password"
             type="password"
@@ -42,14 +43,14 @@ const ResetPasswordPage = () => {
             Reset Password
           </button>
         </form>
-        <p className="mt-4 text-sm text-slate-600">
+        <p className="mt-6 text-sm text-slate-600">
           <Link to="/login" className="font-medium text-primary-700">
             Back to login
           </Link>
         </p>
       </div>
     </div>
-  );
+);
 };
 
 export default ResetPasswordPage;

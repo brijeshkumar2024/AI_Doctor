@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import FileUploadField from "../components/FileUploadField";
 import PageHeader from "../components/PageHeader";
@@ -8,9 +10,11 @@ import { uploadReport } from "../services/reportService";
 const UploadReportPage = () => {
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const uploadMutation = useMutation({
+    mutationFn: uploadReport
+  });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -19,22 +23,22 @@ const UploadReportPage = () => {
       return;
     }
 
-    setLoading(true);
     setError("");
     setInfo("");
 
     try {
       const formData = new FormData();
       formData.append("report", file);
-      const response = await uploadReport(formData);
+      const response = await uploadMutation.mutateAsync(formData);
       if (response.queued) {
         setInfo("Your report was uploaded and queued for AI analysis. You can track progress on the report page.");
       }
+      toast.success("Report uploaded successfully");
       navigate(`/reports/${response.report._id}`);
     } catch (submitError) {
-      setError(submitError.response?.data?.message || "Upload failed");
-    } finally {
-      setLoading(false);
+      const message = submitError.response?.data?.message || "Upload failed";
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -54,8 +58,8 @@ const UploadReportPage = () => {
         {file ? <p className="text-sm text-slate-600">Selected file: {file.name}</p> : null}
         {info ? <p className="text-sm text-primary-700">{info}</p> : null}
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <button type="submit" className="button-primary" disabled={loading}>
-          {loading ? "Processing..." : "Upload and Analyze"}
+        <button type="submit" className="button-primary" disabled={uploadMutation.isPending}>
+          {uploadMutation.isPending ? "Processing..." : "Upload and Analyze"}
         </button>
       </form>
     </div>

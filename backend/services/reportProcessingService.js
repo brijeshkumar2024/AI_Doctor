@@ -11,6 +11,7 @@ import { calculateRiskScoreDetails } from "./riskScoreService.js";
 import { buildDoctorStyleSummary, buildTimelineSummary } from "./summaryService.js";
 import { buildHealthTrends } from "./trendService.js";
 import { HEALTH_DISCLAIMER, PRESCRIPTION_PROCESSING_STATUS, REPORT_PROCESSING_STATUS } from "../utils/constants.js";
+import { totalReportsProcessed } from "../config/metrics.js";
 
 const mergeStructuredValues = (primaryValues = [], fallbackValues = []) => {
   const merged = new Map();
@@ -146,6 +147,7 @@ export const processReportRecord = async ({ reportId, file }) => {
     report.processingStatus = REPORT_PROCESSING_STATUS.COMPLETED;
     report.processingError = "";
     await report.save();
+    totalReportsProcessed.inc();
 
     await insertHealthRecords(report, structuredValues, report.reportType);
 

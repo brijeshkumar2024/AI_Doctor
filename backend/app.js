@@ -16,7 +16,7 @@ import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 import { applySecurityHeaders, sanitizeRequest } from "./middleware/securityMiddleware.js";
 import { metricsHandler, metricsMiddleware } from "./config/metrics.js";
 import { getDatabaseStatus } from "./config/db.js";
-import { isQueueEnabled } from "./config/queue.js";
+import { getQueue, isQueueEnabled, QUEUE_NAMES } from "./config/queue.js";
 import { getRedisStatus, isRedisEnabled } from "./config/redis.js";
 import { swaggerSpec, swaggerUiOptions } from "./config/swagger.js";
 import { logger, requestLogger } from "./utils/logger.js";
@@ -93,8 +93,30 @@ const metricsAccessMiddleware = (req, res, next) => {
   next();
 };
 
-const healthResponse = () => ({
+const getQueueSnapshot = async () => {
+  if (!isQueueEnabled()) {
+    return { enabled: false };
+  }
+
+  const reportQueue = getQueue(QUEUE_NAMES.reportProcessing);
+  const counts = reportQueue ? await reportQueue.getJobCounts("waiting", "active", "completed", "failed") : {};
+  return {
+    enabled: true,
+    ...counts
+  };
+};
+
+const healthResponse = async () => ({
   success: true,
+  data: {
+    status: getDatabaseStatus().state === "connected" ? "ok" : "degraded",
+    uptime: Number(process.uptime().toFixed(2)),
+    db: getDatabaseStatus(),
+    redis: getRedisStatus(),
+    queue: await getQueueSnapshot()
+  },
+  message: "Service health fetched",
+  error: "",
   status: getDatabaseStatus().state === "connected" ? "ok" : "degraded",
   timestamp: new Date().toISOString(),
   uptime: Number(process.uptime().toFixed(2)),
@@ -142,12 +164,12 @@ app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
 app.use(sanitizeRequest);
 app.use(metricsMiddleware);
 
-app.get("/health", (_req, res) => {
-  res.json(healthResponse());
+app.get("/health", async (_req, res) => {
+  res.json(await healthResponse());
 });
 
-app.get("/api/health", (_req, res) => {
-  res.json(healthResponse());
+app.get("/api/health", async (_req, res) => {
+  res.json(await healthResponse());
 });
 
 app.get("/metrics", metricsAccessMiddleware, metricsHandler);

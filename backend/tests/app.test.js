@@ -93,6 +93,50 @@ beforeEach(async () => {
 });
 
 describe("authentication", () => {
+  it("stores optional profile fields during signup", async () => {
+    const response = await request(app).post("/api/auth/signup").send({
+      name: "Profile User",
+      email: "profile@example.com",
+      password: "secret123",
+      age: 29,
+      gender: "female",
+      height: "165 cm",
+      weight: "60 kg",
+      medicalHistory: "Seasonal allergies",
+      allergies: "Dust",
+      preferredLanguage: "hi"
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.user.age).toBe(29);
+    expect(response.body.user.gender).toBe("female");
+    expect(response.body.user.height).toBe("165 cm");
+    expect(response.body.user.weight).toBe("60 kg");
+    expect(response.body.user.medicalHistory).toBe("Seasonal allergies");
+    expect(response.body.user.allergies).toBe("Dust");
+    expect(response.body.user.preferredLanguage).toBe("hi");
+  });
+
+  it("returns field-level validation details for invalid signup input", async () => {
+    const response = await request(app).post("/api/auth/signup").send({
+      name: "",
+      email: "not-an-email",
+      password: "short"
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Name is required");
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "name",
+          location: "body",
+          message: "Name is required"
+        })
+      ])
+    );
+  });
+
   it("logs a user in", async () => {
     const response = await request(app).post("/api/auth/login").send({
       email: "test@example.com",

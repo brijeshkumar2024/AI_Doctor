@@ -16,8 +16,8 @@ const createRateLimiter = (windowMs, max, message, keyGenerator) =>
 const userAwareKeyGenerator = (req) => req.user?._id?.toString() || req.ip;
 
 export const authLimiter = createRateLimiter(
-  15 * 60 * 1000,
-  100,
+  60 * 1000,
+  10,
   "Too many authentication requests. Please try again later.",
   (req) => req.ip
 );
@@ -30,8 +30,8 @@ export const aiLimiter = createRateLimiter(
 );
 
 export const uploadLimiter = createRateLimiter(
-  15 * 60 * 1000,
-  30,
+  60 * 1000,
+  5,
   "Too many upload requests. Please try again later.",
   userAwareKeyGenerator
 );

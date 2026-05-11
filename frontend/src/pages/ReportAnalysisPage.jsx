@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import PageHeader from "../components/PageHeader";
 import { createShareLink, fetchReportById, getReportExportUrl } from "../services/reportService";
@@ -7,32 +9,15 @@ import PDFPreview from "../components/PDFPreview";
 
 const ReportAnalysisPage = () => {
   const { id } = useParams();
-  const [report, setReport] = useState(null);
-  const [error, setError] = useState("");
   const [shareMessage, setShareMessage] = useState("");
-
-  useEffect(() => {
-    const loadReport = async () => {
-      try {
-        const nextReport = await fetchReportById(id);
-        setReport(nextReport);
-      } catch (loadError) {
-        setError(loadError.response?.data?.message || "Failed to load report");
-      }
-    };
-
-    loadReport();
-
-    if (!["pending", "processing"].includes(report?.processingStatus || "completed")) {
-      return undefined;
+  const { data: report, error } = useQuery({
+    queryKey: ["report", id],
+    queryFn: () => fetchReportById(id),
+    refetchInterval: (query) => {
+      const status = query.state.data?.processingStatus;
+      return ["pending", "processing"].includes(status) ? 5000 : false;
     }
-
-    const intervalId = window.setInterval(loadReport, 5000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [id, report?.processingStatus]);
+  });
 
   const exportUrl = useMemo(() => (report ? getReportExportUrl(report._id) : ""), [report]);
 
@@ -41,8 +26,11 @@ const ReportAnalysisPage = () => {
       const data = await createShareLink(id);
       await navigator.clipboard.writeText(data.shareUrl);
       setShareMessage(`Share link copied. Expires on ${new Date(data.expiresAt).toLocaleString()}.`);
+      toast.success("Share link copied to clipboard");
     } catch (shareError) {
-      setShareMessage(shareError.response?.data?.message || "Could not create share link.");
+      const message = shareError.response?.data?.message || "Could not create share link.";
+      setShareMessage(message);
+      toast.error(message);
     }
   };
 
@@ -73,7 +61,7 @@ const ReportAnalysisPage = () => {
       />
       <DisclaimerBanner />
       {shareMessage ? <p className="mb-3 text-sm text-primary-700">{shareMessage}</p> : null}
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="text-sm text-red-600">{error.response?.data?.message || "Failed to load report"}</p> : null}
       {!report ? (
         <div className="text-slate-600">Loading report...</div>
       ) : (

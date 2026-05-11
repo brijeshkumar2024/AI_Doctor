@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 export const protect = asyncHandler(async (req, _res, next) => {
-  const token = req.cookies?.token;
+  const token = req.cookies?.accessToken || req.cookies?.token;
 
   if (!token) {
     const error = new Error("Not authorized");

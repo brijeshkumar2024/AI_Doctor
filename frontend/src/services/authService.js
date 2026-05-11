@@ -2,17 +2,17 @@ import api from "./api";
 
 export const signupUser = async (payload) => {
   const { data } = await api.post("/auth/signup", payload);
-  return data.user;
+  return data.data?.user || data.user;
 };
 
 export const loginUser = async (payload) => {
   const { data } = await api.post("/auth/login", payload);
-  return data.user;
+  return data.data?.user || data.user;
 };
 
 export const getCurrentUser = async () => {
   const { data } = await api.get("/auth/me");
-  return data.user;
+  return data.data?.user || data.user;
 };
 
 export const logoutUser = async () => {

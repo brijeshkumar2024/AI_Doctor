@@ -4,6 +4,24 @@ import { externalServiceFailureCounter } from "../config/metrics.js";
 
 let transporter;
 
+const getSmtpHint = () => {
+  if ((process.env.SMTP_HOST || "").includes("gmail.com")) {
+    return "Gmail SMTP requires a valid app password when 2-Step Verification is enabled.";
+  }
+
+  return undefined;
+};
+
+const isDevelopment = () => process.env.NODE_ENV === "development";
+
+const logDevelopmentResetLink = ({ email, resetLink, reason }) => {
+  logger.info({
+    email,
+    resetLink,
+    reason
+  }, "Password reset link generated for development");
+};
+
 const getTransporter = () => {
   if (transporter) {
     return transporter;
@@ -56,9 +74,21 @@ export const verifyEmailService = async () => {
       service: "smtp",
       operation: "verify"
     });
-    logger.warn("SMTP verification failed", {
-      message: error.message
-    });
+
+    const payload = {
+      message: error.message,
+      host: process.env.SMTP_HOST || "",
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === "true",
+      hint: getSmtpHint()
+    };
+
+    if (isDevelopment()) {
+      logger.info(payload, "SMTP verification failed in development");
+    } else {
+      logger.warn(payload, "SMTP verification failed");
+    }
+
     return {
       configured: true,
       verified: false,
@@ -71,8 +101,12 @@ export const sendPasswordResetLink = async ({ email, resetLink }) => {
   const smtpTransporter = getTransporter();
 
   if (!smtpTransporter) {
-    if (process.env.NODE_ENV === "development") {
-      logger.info("Password reset link generated for development", { email, resetLink });
+    if (isDevelopment()) {
+      logDevelopmentResetLink({
+        email,
+        resetLink,
+        reason: "smtp_not_configured"
+      });
       return;
     }
 
@@ -101,10 +135,26 @@ export const sendPasswordResetLink = async ({ email, resetLink }) => {
       service: "smtp",
       operation: "send_password_reset"
     });
-    logger.warn("Password reset email failed", {
+
+    if (isDevelopment()) {
+      logger.info({
+        email,
+        smtpError: error.message,
+        hint: getSmtpHint()
+      }, "SMTP send failed in development; using local reset link fallback");
+      logDevelopmentResetLink({
+        email,
+        resetLink,
+        reason: "smtp_send_failed"
+      });
+      return;
+    }
+
+    logger.warn({
       message: error.message,
-      email
-    });
+      email,
+      hint: getSmtpHint()
+    }, "Password reset email failed");
     throw error;
   }
 };

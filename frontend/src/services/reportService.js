@@ -16,7 +16,7 @@ export const fetchReports = async (params = {}) => {
 
 export const fetchReportById = async (id) => {
   const { data } = await api.get(`/reports/${id}`);
-  return data.report;
+  return data.data?.report || data.report;
 };
 
 export const createShareLink = async (id, payload = {}) => {
@@ -26,7 +26,7 @@ export const createShareLink = async (id, payload = {}) => {
 
 export const fetchSharedReport = async (token) => {
   const { data } = await api.get(`/shared/reports/${token}`);
-  return data.report;
+  return data.data?.report || data.report;
 };
 
 export const getReportExportUrl = (id) =>

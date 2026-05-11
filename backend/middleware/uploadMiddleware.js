@@ -84,10 +84,10 @@ export const enforceSafeUpload = async (req, _res, next) => {
   }
 
   req.fileSecurity = scanResult;
-  logger.info("Upload validated", {
+  logger.info({
     fileName: req.file.originalname,
     mimeType: req.file.mimetype,
     scanMessage: scanResult.message
-  });
+  }, "Upload validated");
   next();
 };

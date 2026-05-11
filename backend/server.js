@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000;
 let server;
 
 const shutdown = async (signal) => {
-  logger.info("Shutdown signal received", { signal });
+  logger.info({ signal }, "Shutdown signal received");
 
   if (server) {
     await new Promise((resolve, reject) => {
@@ -35,28 +35,28 @@ const startServer = async () => {
   await logStartupStatus({ context: "server" });
 
   server = app.listen(port, () => {
-    logger.info("Backend server running", { port });
+    logger.info({ port }, "Backend server running");
   });
 };
 
 process.on("SIGINT", () => {
   shutdown("SIGINT").catch((error) => {
-    logger.error("Shutdown failed", { message: error.message, stack: error.stack });
+    logger.error({ message: error.message, stack: error.stack }, "Shutdown failed");
     process.exit(1);
   });
 });
 
 process.on("SIGTERM", () => {
   shutdown("SIGTERM").catch((error) => {
-    logger.error("Shutdown failed", { message: error.message, stack: error.stack });
+    logger.error({ message: error.message, stack: error.stack }, "Shutdown failed");
     process.exit(1);
   });
 });
 
 startServer().catch((error) => {
-  logger.error("Failed to start server", {
+  logger.error({
     message: error.message,
     stack: error.stack
-  });
+  }, "Failed to start server");
   process.exit(1);
 });

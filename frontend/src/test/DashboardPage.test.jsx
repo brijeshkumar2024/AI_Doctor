@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import DashboardPage from "../pages/DashboardPage";
 
@@ -22,19 +23,22 @@ vi.mock("../services/dashboardService", () => ({
 
 describe("DashboardPage", () => {
   it("renders the dashboard summary", async () => {
+    const queryClient = new QueryClient();
     render(
-      <MemoryRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true
-        }}
-      >
-        <DashboardPage />
-      </MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true
+          }}
+        >
+          <DashboardPage />
+        </MemoryRouter>
+      </QueryClientProvider>
     );
 
     await waitFor(() => expect(screen.getByText(/Health Dashboard/i)).toBeInTheDocument());
-    expect(screen.getByText(/CBC Report/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/CBC Report/i)).toBeInTheDocument());
     expect(screen.getByText(/52%/i)).toBeInTheDocument();
   });
 });

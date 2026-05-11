@@ -4,6 +4,7 @@ import {
   getCurrentUser,
   login,
   logout,
+  refreshSession,
   resetPassword,
   signup
 } from "../controllers/authController.js";
@@ -43,6 +44,7 @@ router.post(
   resetPassword
 );
 router.get("/me", protect, getCurrentUser);
+router.post("/refresh", authLimiter, refreshSession);
 router.post("/logout", logout);
 
 export default router;

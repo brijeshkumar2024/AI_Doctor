@@ -31,6 +31,42 @@ export const ocrProcessingDurationSeconds = new client.Histogram({
   registers: [register]
 });
 
+export const totalReportsProcessed = new client.Counter({
+  name: "total_reports_processed",
+  help: "Total number of reports processed",
+  registers: [register]
+});
+
+export const ocrProcessingDurationMs = new client.Histogram({
+  name: "ocr_processing_duration_ms",
+  help: "OCR processing duration in milliseconds",
+  buckets: [50, 100, 300, 500, 1000, 2000, 5000, 10000, 20000],
+  registers: [register]
+});
+
+export const aiAnalysisDurationMs = new client.Histogram({
+  name: "ai_analysis_duration_ms",
+  help: "AI analysis duration in milliseconds",
+  labelNames: ["operation"],
+  buckets: [50, 100, 300, 500, 1000, 2000, 5000, 10000, 20000],
+  registers: [register]
+});
+
+export const activeQueueJobs = new client.Gauge({
+  name: "active_queue_jobs",
+  help: "Currently active queue jobs",
+  labelNames: ["queue"],
+  registers: [register]
+});
+
+export const httpRequestDurationMs = new client.Histogram({
+  name: "http_request_duration_ms",
+  help: "Duration of HTTP requests in milliseconds",
+  labelNames: ["method", "route", "status_code"],
+  buckets: [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000],
+  registers: [register]
+});
+
 export const backgroundJobCounter = new client.Counter({
   name: "ai_health_background_jobs_total",
   help: "Background jobs processed",
@@ -54,6 +90,7 @@ export const externalServiceFailureCounter = new client.Counter({
 
 export const metricsMiddleware = (req, res, next) => {
   const stopTimer = httpRequestDuration.startTimer();
+  const startTime = Date.now();
 
   res.on("finish", () => {
     const routePath = req.route?.path
@@ -65,6 +102,14 @@ export const metricsMiddleware = (req, res, next) => {
       route: routePath,
       status_code: String(res.statusCode)
     });
+    httpRequestDurationMs.observe(
+      {
+        method: req.method,
+        route: routePath,
+        status_code: String(res.statusCode)
+      },
+      Date.now() - startTime
+    );
   });
 
   next();
