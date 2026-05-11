@@ -14,6 +14,7 @@ import SymptomCheckerPage from "./pages/SymptomCheckerPage";
 import ChatAssistantPage from "./pages/ChatAssistantPage";
 import ProfilePage from "./pages/ProfilePage";
 import LanguageSettingsPage from "./pages/LanguageSettingsPage";
+import HealthTrends from "./pages/HealthTrends";
 import NotFoundPage from "./pages/NotFoundPage";
 import SharedReportPage from "./pages/SharedReportPage";
 
@@ -63,6 +64,14 @@ const App = () => (
         element={
           <ProtectedRoute>
             <SymptomCheckerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trends"
+        element={
+          <ProtectedRoute>
+            <HealthTrends />
           </ProtectedRoute>
         }
       />

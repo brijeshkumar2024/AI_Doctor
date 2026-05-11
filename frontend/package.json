@@ -13,6 +13,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.100.9",
     "axios": "^1.8.4",
+    "date-fns": "^4.1.0",
     "i18next": "^25.0.1",
     "pdfjs-dist": "^4.10.38",
     "react": "^19.0.0",
@@ -21,7 +22,7 @@
     "react-i18next": "^15.4.1",
     "react-pdf": "^9.2.1",
     "react-router-dom": "^6.30.0",
-    "recharts": "^2.15.1"
+    "recharts": "^2.15.4"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

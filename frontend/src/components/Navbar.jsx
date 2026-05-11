@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import useAuth from "../hooks/useAuth";
 
 const navLinkClass = ({ isActive }) =>
@@ -14,6 +15,19 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const { data: trendsSummary } = useQuery({
+    queryKey: ["trends", "summary"],
+    queryFn: async () => {
+      const response = await fetch("/api/trends/summary");
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000 // 5 minutes
+  });
+
+  const hasWorseningTrends = trendsSummary?.data?.summary?.some(item => item.trend.direction === "worsening");
 
   const handleLogout = async () => {
     await logout();
@@ -46,6 +60,12 @@ const Navbar = () => {
               </NavLink>
               <NavLink to="/symptoms" className={navLinkClass}>
                 {t("symptomChecker")}
+              </NavLink>
+              <NavLink to="/trends" className={`${navLinkClass} relative`}>
+                Health Trends
+                {hasWorseningTrends && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></span>
+                )}
               </NavLink>
               <NavLink to="/chat" className={navLinkClass}>
                 {t("chatAssistant")}

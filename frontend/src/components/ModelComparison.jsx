@@ -1,4 +1,5 @@
-const statusBadgeClass = {
+import MiniTrendSparkline from "./MiniTrendSparkline";
+import { PARAMETER_PATTERNS } from "../utils/healthParams";
   normal: "bg-emerald-100 text-emerald-800",
   low: "bg-amber-100 text-amber-800",
   high: "bg-orange-100 text-orange-800",
@@ -49,20 +50,29 @@ const ModelColumn = ({ title, badge, data }) => (
               <th className="py-2">Parameter</th>
               <th className="py-2">Value</th>
               <th className="py-2">Status</th>
+              <th className="py-2">Trend</th>
             </tr>
           </thead>
           <tbody>
-            {(data?.keyFindings || []).map((item, index) => (
-              <tr key={`${item.parameter}-${index}`} className="border-t border-slate-100">
-                <td className="py-2 pr-3 text-slate-700">{item.parameter}</td>
-                <td className="py-2 pr-3 text-slate-700">{item.value}</td>
-                <td className="py-2">
-                  <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${statusBadgeClass[item.status] || statusBadgeClass.normal}`}>
-                    {item.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {(data?.keyFindings || []).map((item, index) => {
+              const isTrackedParameter = Object.keys(PARAMETER_PATTERNS).includes(item.parameter);
+              return (
+                <tr key={`${item.parameter}-${index}`} className="border-t border-slate-100">
+                  <td className="py-2 pr-3 text-slate-700">{item.parameter}</td>
+                  <td className="py-2 pr-3 text-slate-700">{item.value}</td>
+                  <td className="py-2">
+                    <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${statusBadgeClass[item.status] || statusBadgeClass.normal}`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  {isTrackedParameter && (
+                    <td className="py-2 pl-3">
+                      <MiniTrendSparkline parameter={item.parameter} />
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
