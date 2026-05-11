@@ -166,12 +166,18 @@ app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
 app.use(sanitizeRequest);
 app.use(metricsMiddleware);
 
+const sendHealthResponse = async (res) => {
+  const payload = await healthResponse();
+  const httpStatus = payload.status === "ok" ? 200 : 503;
+  res.status(httpStatus).json(payload);
+};
+
 app.get("/health", async (_req, res) => {
-  res.json(await healthResponse());
+  await sendHealthResponse(res);
 });
 
 app.get("/api/health", async (_req, res) => {
-  res.json(await healthResponse());
+  await sendHealthResponse(res);
 });
 
 app.get("/metrics", metricsAccessMiddleware, metricsHandler);
