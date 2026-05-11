@@ -20,9 +20,9 @@ router.get("/:token", async (req, res) => {
       data: result
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
+    res.status(404).json({
       success: false,
-      message: error.message
+      message: "Shared report not available"
     });
   }
 });
