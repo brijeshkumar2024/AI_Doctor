@@ -1,6 +1,7 @@
 import Report from "../models/Report.js";
 import Prescription from "../models/Prescription.js";
 import HealthRecord from "../models/HealthRecord.js";
+import HealthMetric from "../models/HealthMetric.js";
 import User from "../models/User.js";
 import { extractTextFromFile } from "./ocrService.js";
 import { parseMedicalValues, parsePrescriptionText } from "./parserService.js";
@@ -11,6 +12,7 @@ import { runComparisonAnalysis } from "./aiComparison.service.js";
 import { calculateRiskScoreDetails } from "./riskScoreService.js";
 import { buildDoctorStyleSummary, buildTimelineSummary } from "./summaryService.js";
 import { buildHealthTrends } from "./trendService.js";
+import { extractHealthMetrics } from "./trendExtractor.service.js";
 import { HEALTH_DISCLAIMER, PRESCRIPTION_PROCESSING_STATUS, REPORT_PROCESSING_STATUS } from "../utils/constants.js";
 import { totalReportsProcessed } from "../config/metrics.js";
 
@@ -198,6 +200,22 @@ export const processReportRecord = async ({ reportId, file }) => {
     report.processingStatus = REPORT_PROCESSING_STATUS.COMPLETED;
     report.processingError = "";
     await report.save();
+
+    // Extract health metrics for trends after AI analysis is complete
+    try {
+      const allKeyFindings = [
+        ...(comparisonAiAnalysis.gemini?.keyFindings || []),
+        ...(comparisonAiAnalysis.groq?.keyFindings || [])
+      ];
+      const metrics = extractHealthMetrics(allKeyFindings, report._id, report.user, report.createdAt);
+      if (metrics.length > 0) {
+        await HealthMetric.insertMany(metrics, { ordered: false });
+        logger.info({ reportId: report._id.toString(), metricCount: metrics.length }, "Health metrics extracted and saved");
+      }
+    } catch (metricError) {
+      logger.warn({ reportId: report._id.toString(), error: metricError.message }, "Failed to extract health metrics, continuing without metrics");
+    }
+
     totalReportsProcessed.inc();
 
     await insertHealthRecords(report, structuredValues, report.reportType);

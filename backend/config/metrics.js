@@ -100,6 +100,20 @@ export const backgroundJobCounter = new client.Counter({
   registers: [register]
 });
 
+export const healthMetricsExtractedTotal = new client.Counter({
+  name: "health_metrics_extracted_total",
+  help: "Total number of health metrics extracted",
+  labelNames: ["parameter"],
+  registers: [register]
+});
+
+export const trendCalculationDurationMs = new client.Histogram({
+  name: "trend_calculation_duration_ms",
+  help: "Duration of trend calculations in milliseconds",
+  buckets: [10, 25, 50, 100, 250, 500, 1000],
+  registers: [register]
+});
+
 export const applicationErrorCounter = new client.Counter({
   name: "ai_health_application_errors_total",
   help: "Application errors grouped by source and status code",

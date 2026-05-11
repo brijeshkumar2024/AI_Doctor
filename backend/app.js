@@ -12,6 +12,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import sharedRoutes from "./routes/sharedRoutes.js";
+import trendsRoutes from "./routes/trends.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 import { applySecurityHeaders, sanitizeRequest } from "./middleware/securityMiddleware.js";
 import { metricsHandler, metricsMiddleware } from "./config/metrics.js";
@@ -186,6 +187,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/shared", sharedRoutes);
+app.use("/api/trends", trendsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
