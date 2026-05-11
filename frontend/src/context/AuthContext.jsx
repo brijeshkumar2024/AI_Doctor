@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import { getCurrentUser, loginUser, logoutUser, signupUser } from "../services/authService";
+import { connectSocket, disconnectSocket } from "../services/socket";
 import i18n from "../i18n";
 
 export const AuthContext = createContext(null);
@@ -12,6 +13,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("language", userData.preferredLanguage || "en");
     i18n.changeLanguage(userData.preferredLanguage || "en");
     setUser(userData);
+    
+    // Connect WebSocket when user logs in
+    if (userData?.accessToken) {
+      connectSocket(userData.accessToken);
+    }
   };
 
   const signup = async (payload) => {
@@ -32,6 +38,7 @@ export const AuthProvider = ({ children }) => {
     } catch (_error) {
       // Clear local UI state even if the cookie is already gone.
     }
+    disconnectSocket();
     setUser(null);
   };
 

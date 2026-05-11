@@ -4,9 +4,16 @@ import connectDB, { closeDBConnection } from "./config/db.js";
 import { closeRedis, connectRedis } from "./config/redis.js";
 import { logger } from "./utils/logger.js";
 import { logStartupStatus } from "./services/startupService.js";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { initSocket } from "./services/socket.service.js";
 
 const port = process.env.PORT || 5000;
 let server;
+let io;
+
+export { io };
+let io;
 
 const shutdown = async (signal) => {
   logger.info({ signal }, "Shutdown signal received");
@@ -34,9 +41,27 @@ const startServer = async () => {
   await connectRedis();
   await logStartupStatus({ context: "server" });
 
-  server = app.listen(port, () => {
+  const httpServer = createServer(app);
+
+  io = new Server(httpServer, {
+    cors: {
+      origin: process.env.FRONTEND_URL,
+      credentials: true,
+      methods: ["GET", "POST"]
+    },
+    path: "/socket.io",
+    transports: ["websocket", "polling"],
+    pingTimeout: 60000,
+    pingInterval: 25000
+  });
+
+  initSocket(io);
+
+  httpServer.listen(port, () => {
     logger.info({ port }, "Backend server running");
   });
+
+  server = httpServer;
 };
 
 process.on("SIGINT", () => {

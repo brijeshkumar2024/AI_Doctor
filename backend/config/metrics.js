@@ -146,6 +146,19 @@ export const externalServiceFailureCounter = new client.Counter({
   registers: [register]
 });
 
+export const activeConnectionsGauge = new client.Gauge({
+  name: "websocket_active_connections",
+  help: "Number of active WebSocket connections",
+  registers: [register]
+});
+
+export const socketEventsCounter = new client.Counter({
+  name: "websocket_events_emitted_total",
+  help: "Total WebSocket events emitted",
+  labelNames: ["event_name"],
+  registers: [register]
+});
+
 export const metricsMiddleware = (req, res, next) => {
   const stopTimer = httpRequestDuration.startTimer();
   const startTime = Date.now();

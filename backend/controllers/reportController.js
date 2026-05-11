@@ -6,7 +6,8 @@ import { buildReportSummaryPdf } from "../services/pdfExportService.js";
 import { createSignedReportToken, verifySignedReportToken } from "../services/shareService.js";
 import { enqueueReportProcessingJob } from "../services/jobProcessorService.js";
 import { processReportRecord } from "../services/reportProcessingService.js";
-import { isQueueEnabled } from "../config/queue.js";
+import { isQueueEnabled, getQueue, QUEUE_NAMES } from "../config/queue.js";
+import { emitReportQueued } from "../services/socket.service.js";
 
 const shouldProcessAsync = () =>
   isQueueEnabled() && process.env.ASYNC_REPORT_PROCESSING !== "false";
@@ -52,6 +53,16 @@ export const uploadReport = asyncHandler(async (req, res) => {
           },
           requestId: req.id
         });
+
+        // Emit report queued event with position
+        try {
+          const queue = getQueue(QUEUE_NAMES.reportProcessing);
+          const jobCounts = await queue.getJobCounts('waiting');
+          const queuePosition = jobCounts.waiting + 1;
+          await emitReportQueued(req.user._id.toString(), report._id.toString(), queuePosition);
+        } catch (emitErr) {
+          // Socket emit failure shouldn't affect the main flow
+        }
       } catch (_queueError) {
         const processedReport = await processReportRecord({
           reportId: report._id,

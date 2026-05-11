@@ -15,6 +15,11 @@ import { buildHealthTrends } from "./trendService.js";
 import { extractHealthMetrics } from "./trendExtractor.service.js";
 import { HEALTH_DISCLAIMER, PRESCRIPTION_PROCESSING_STATUS, REPORT_PROCESSING_STATUS } from "../utils/constants.js";
 import { totalReportsProcessed } from "../config/metrics.js";
+import {
+  emitReportProcessing,
+  emitReportCompleted,
+  emitReportFailed
+} from "./socket.service.js";
 
 const mergeStructuredValues = (primaryValues = [], fallbackValues = []) => {
   const merged = new Map();
@@ -101,7 +106,9 @@ export const processReportRecord = async ({ reportId, file }) => {
   await report.save();
 
   try {
+    await emitReportProcessing(user._id.toString(), reportId, 'ocr_started');
     const ocrResult = await extractTextFromFile(file);
+    await emitReportProcessing(user._id.toString(), reportId, 'ocr_completed');
     const classification = classifyReport(ocrResult.cleanedText);
     const regexParsed = parseMedicalValues({
       cleanedText: ocrResult.cleanedText,
@@ -137,6 +144,7 @@ export const processReportRecord = async ({ reportId, file }) => {
       structuredValues,
       trendInsights: trends
     });
+    await emitReportProcessing(user._id.toString(), reportId, 'gemini_started');
     const fallbackAiAnalysis = await analyzeReportWithAI({
       structuredValues,
       reportType: llmExtracted.reportType || classification.reportType,
@@ -144,7 +152,11 @@ export const processReportRecord = async ({ reportId, file }) => {
       trendInsights: trends.map((trend) => trend.insight),
       riskFactors: riskDetails.factors
     });
+    await emitReportProcessing(user._id.toString(), reportId, 'gemini_completed');
+    await emitReportProcessing(user._id.toString(), reportId, 'groq_started');
     const comparisonResult = await runComparisonAnalysis(ocrResult.cleanedText);
+    await emitReportProcessing(user._id.toString(), reportId, 'groq_completed');
+    await emitReportProcessing(user._id.toString(), reportId, 'comparison_started');
     const primaryModel = comparisonResult.gemini.summary
       ? comparisonResult.gemini
       : comparisonResult.groq.summary
@@ -203,6 +215,7 @@ export const processReportRecord = async ({ reportId, file }) => {
 
     // Extract health metrics for trends after AI analysis is complete
     try {
+      await emitReportProcessing(user._id.toString(), reportId, 'metrics_extraction');
       const allKeyFindings = [
         ...(comparisonAiAnalysis.gemini?.keyFindings || []),
         ...(comparisonAiAnalysis.groq?.keyFindings || [])
@@ -220,11 +233,18 @@ export const processReportRecord = async ({ reportId, file }) => {
 
     await insertHealthRecords(report, structuredValues, report.reportType);
 
+    await emitReportCompleted(user._id.toString(), reportId, {
+      agreementRate: comparisonAiAnalysis.comparison?.agreementRate || 0,
+      riskCount: comparisonAiAnalysis.riskFlags?.length || 0,
+      keyFindingsCount: comparisonAiAnalysis.keyFindings?.length || 0
+    });
+
     return report;
   } catch (error) {
     report.processingStatus = REPORT_PROCESSING_STATUS.FAILED;
     report.processingError = error.message;
     await report.save();
+    await emitReportFailed(user._id.toString(), reportId, error.message);
     throw error;
   }
 };

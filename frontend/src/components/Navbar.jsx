@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import useAuth from "../hooks/useAuth";
+import { useSocket } from "../hooks/useSocket";
 
 const navLinkClass = ({ isActive }) =>
   [
@@ -14,6 +15,7 @@ const navLinkClass = ({ isActive }) =>
 const Navbar = () => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const { isConnected } = useSocket();
   const navigate = useNavigate();
 
   const { data: trendsSummary } = useQuery({
@@ -49,6 +51,25 @@ const Navbar = () => {
         <nav className="flex flex-wrap items-center gap-2">
           {user ? (
             <>
+              {/* Connection status indicator */}
+              {isConnected ? (
+                <div
+                  title="Real-time updates enabled"
+                  className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800"
+                >
+                  <span className="h-2 w-2 rounded-full bg-green-600 animate-pulse"></span>
+                  Live
+                </div>
+              ) : (
+                <div
+                  title="Reconnecting..."
+                  className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800"
+                >
+                  <span className="h-2 w-2 rounded-full bg-yellow-600"></span>
+                  Reconnecting
+                </div>
+              )}
+              
               <NavLink to="/dashboard" className={navLinkClass}>
                 {t("dashboard")}
               </NavLink>

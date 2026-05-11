@@ -13,6 +13,8 @@ import PDFPreview from "../components/PDFPreview";
 import ModelComparison from "../components/ModelComparison";
 import ComparisonHighlights from "../components/ComparisonHighlights";
 import ShareReportModal from "../components/ShareReportModal";
+import ReportStatusTracker from "../components/ReportStatusTracker";
+import { useReportStatus } from "../hooks/useReportStatus";
 
 const ReportAnalysisPage = () => {
   const { id } = useParams();
@@ -20,17 +22,19 @@ const ReportAnalysisPage = () => {
   const [showRawOcr, setShowRawOcr] = useState(false);
   const { data: report, error } = useQuery({
     queryKey: ["report", id],
-    queryFn: () => fetchReportById(id),
-    refetchInterval: (query) => {
-      const status = query.state.data?.processingStatus;
-      return ["pending", "processing"].includes(status) ? 5000 : false;
-    }
+    queryFn: () => fetchReportById(id)
   });
+  
+  // Use socket-powered status tracking instead of polling
+  const { status, stage, stageMessage, queuePosition, isLive } = useReportStatus(
+    id,
+    report?.processingStatus || "pending"
+  );
+
   const { data: comparisonData } = useQuery({
     queryKey: ["report-comparison", id],
     queryFn: () => fetchReportComparison(id),
-    enabled: Boolean(report?._id),
-    refetchInterval: report?.processingStatus === "completed" ? false : 5000
+    enabled: Boolean(report?._id) && status === 'completed'
   });
 
   const { data: shareLinks } = useQuery({
@@ -106,10 +110,14 @@ const ReportAnalysisPage = () => {
                 Back to Dashboard
               </Link>
             </div>
-            {["pending", "processing"].includes(report.processingStatus) ? (
-              <div className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-700">
-                Analysis is still running in the background. This page refreshes automatically.
-              </div>
+            {["pending", "processing", "queued"].includes(status) ? (
+              <ReportStatusTracker
+                status={status}
+                stage={stage}
+                stageMessage={stageMessage}
+                queuePosition={queuePosition}
+                isLive={isLive}
+              />
             ) : null}
           </section>
 
