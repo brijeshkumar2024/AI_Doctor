@@ -13,6 +13,7 @@
     "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch"
   },
   "dependencies": {
+    "ai-health-report-analyzer": "file:..",
     "axios": "^1.8.4",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.56.1",

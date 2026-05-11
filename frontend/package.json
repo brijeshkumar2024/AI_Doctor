@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.9",
+    "ai-health-report-analyzer": "file:..",
     "axios": "^1.8.4",
     "date-fns": "^4.1.0",
     "i18next": "^25.0.1",
