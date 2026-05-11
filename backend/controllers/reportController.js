@@ -140,6 +140,38 @@ export const getReportById = asyncHandler(async (req, res) => {
   });
 });
 
+export const getReportComparison = asyncHandler(async (req, res) => {
+  const report = await Report.findOne(
+    { _id: req.params.id, user: req.user._id },
+    { aiAnalysis: 1, processingStatus: 1, processingError: 1, fileName: 1, createdAt: 1 }
+  ).lean();
+
+  if (!report) {
+    const error = new Error("Report not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  res.json({
+    success: true,
+    data: {
+      reportId: report._id,
+      fileName: report.fileName,
+      createdAt: report.createdAt,
+      processingStatus: report.processingStatus,
+      processingError: report.processingError,
+      comparison: {
+        gemini: report.aiAnalysis?.gemini || {},
+        groq: report.aiAnalysis?.groq || {},
+        comparison: report.aiAnalysis?.comparison || {},
+        completedAt: report.aiAnalysis?.completedAt || null
+      }
+    },
+    message: "Report comparison fetched",
+    error: ""
+  });
+});
+
 export const createReportShareLink = asyncHandler(async (req, res) => {
   const report = await Report.findOne({ _id: req.params.id, user: req.user._id });
   if (!report) {

@@ -2,6 +2,7 @@ import express from "express";
 import {
   createReportShareLink,
   exportReportSummary,
+  getReportComparison,
   getReportById,
   getReports,
   uploadReport
@@ -19,6 +20,7 @@ router.get("/", paginationValidation, validateRequest, getReports);
 router.post("/", uploadLimiter, upload.single("report"), enforceSafeUpload, uploadReport);
 router.post("/:id/share-link", shareReportValidation, validateRequest, createReportShareLink);
 router.get("/:id/export-summary", exportReportSummary);
+router.get("/:id/comparison", getReportComparison);
 router.get("/:id", getReportById);
 
 export default router;
