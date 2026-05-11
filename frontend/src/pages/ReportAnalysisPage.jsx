@@ -4,12 +4,20 @@ import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import PageHeader from "../components/PageHeader";
-import { createShareLink, fetchReportById, getReportExportUrl } from "../services/reportService";
+import {
+  createShareLink,
+  fetchReportById,
+  fetchReportComparison,
+  getReportExportUrl
+} from "../services/reportService";
 import PDFPreview from "../components/PDFPreview";
+import ModelComparison from "../components/ModelComparison";
+import ComparisonHighlights from "../components/ComparisonHighlights";
 
 const ReportAnalysisPage = () => {
   const { id } = useParams();
   const [shareMessage, setShareMessage] = useState("");
+  const [showRawOcr, setShowRawOcr] = useState(false);
   const { data: report, error } = useQuery({
     queryKey: ["report", id],
     queryFn: () => fetchReportById(id),
@@ -17,6 +25,12 @@ const ReportAnalysisPage = () => {
       const status = query.state.data?.processingStatus;
       return ["pending", "processing"].includes(status) ? 5000 : false;
     }
+  });
+  const { data: comparisonData } = useQuery({
+    queryKey: ["report-comparison", id],
+    queryFn: () => fetchReportComparison(id),
+    enabled: Boolean(report?._id),
+    refetchInterval: report?.processingStatus === "completed" ? false : 5000
   });
 
   const exportUrl = useMemo(() => (report ? getReportExportUrl(report._id) : ""), [report]);
@@ -155,85 +169,29 @@ const ReportAnalysisPage = () => {
             </div>
           </section>
 
-          <section className="grid gap-4 lg:grid-cols-2">
-            <div className="card">
-              <h2 className="text-lg font-semibold">AI Summary</h2>
-              <p className="mt-3 text-slate-700">{report.aiAnalysis.summary}</p>
-              <div className="mt-4 space-y-3">
-                <h3 className="font-medium">Abnormal Findings</h3>
-                {report.aiAnalysis.abnormalFindings.length === 0 ? (
-                  <p className="text-slate-600">No abnormal findings were highlighted.</p>
-                ) : (
-                  report.aiAnalysis.abnormalFindings.map((finding, index) => (
-                    <div key={`${finding}-${index}`} className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-                      {finding}
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="mt-4 space-y-3">
-                <h3 className="font-medium">Abnormal Explanations</h3>
-                {(report.aiAnalysis.abnormalExplanations || []).map((reason, index) => (
-                  <div key={`${reason}-${index}`} className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-                    {reason}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 space-y-3">
-                <h3 className="font-medium">Possible Reasons</h3>
-                {(report.aiAnalysis.possibleReasons || []).map((reason, index) => (
-                  <div key={`${reason}-${index}`} className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-                    {reason}
-                  </div>
-                ))}
-              </div>
+          <ComparisonHighlights comparison={comparisonData?.comparison || {}} />
+
+          <ModelComparison
+            gemini={comparisonData?.gemini || report.aiAnalysis?.gemini}
+            groq={comparisonData?.groq || report.aiAnalysis?.groq}
+          />
+
+          <section className="card">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">Raw OCR Text</h2>
+              <button
+                type="button"
+                onClick={() => setShowRawOcr((value) => !value)}
+                className="button-secondary"
+              >
+                {showRawOcr ? "Hide" : "Show Raw OCR Text"}
+              </button>
             </div>
-            <div className="card">
-              <h2 className="text-lg font-semibold">Doctor-Style Summary</h2>
-              <div className="mt-4 space-y-3">
-                {(report.doctorSummary || []).map((item, index) => (
-                  <div key={`${item}-${index}`} className="rounded-lg bg-primary-50 p-3 text-sm text-slate-700">
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-5">
-                <h3 className="font-medium">Recommendations</h3>
-                <div className="mt-3 space-y-3">
-                  {(report.aiAnalysis.recommendations || []).map((item, index) => (
-                    <div key={`${item}-${index}`} className="rounded-lg bg-primary-50 p-3 text-sm text-slate-700">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-5">
-                <h3 className="font-medium">Risk Factors</h3>
-                <div className="mt-3 space-y-3">
-                  {(report.riskFactors || []).map((item, index) => (
-                    <div key={`${item}-${index}`} className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-5">
-                <h3 className="font-medium">Timeline Summary</h3>
-                <div className="mt-3 space-y-3">
-                  {(report.timelineSummary || []).map((item, index) => (
-                    <div key={`${item}-${index}`} className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-5">
-                <h3 className="font-medium">Extracted OCR Text</h3>
-                <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-700">
-                  {report.cleanedText || report.extractedText || "No OCR text available."}
-                </pre>
-              </div>
-            </div>
+            {showRawOcr ? (
+              <pre className="mt-3 max-h-64 overflow-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-700">
+                {report.cleanedText || report.extractedText || "No OCR text available."}
+              </pre>
+            ) : null}
           </section>
         </div>
       )}

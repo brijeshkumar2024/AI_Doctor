@@ -24,6 +24,11 @@ export const createShareLink = async (id, payload = {}) => {
   return data;
 };
 
+export const fetchReportComparison = async (id) => {
+  const { data } = await api.get(`/reports/${id}/comparison`);
+  return data.data?.comparison || {};
+};
+
 export const fetchSharedReport = async (token) => {
   const { data } = await api.get(`/shared/reports/${token}`);
   return data.data?.report || data.report;
